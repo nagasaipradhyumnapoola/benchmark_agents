@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "command": "uv run benchlab ui",
+  "mode": "production build at default API port",
+  "native_node_launch_without_cmd_shell": true,
+  "api_startup": "passed",
+  "web_page_http_200": "passed",
+  "web_api_proxy": "passed",
+  "custom_port_dev_api_and_demo": "passed in isolated data directory; cold dev-page compile exceeded 45s on low-memory host",
+  "telemetry_disabled": true
+}

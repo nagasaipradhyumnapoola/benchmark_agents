@@ -39,4 +39,4 @@ At 1024px condense navigation; 768px use a sheet; 390px stack panels, scroll tab
 
 ## Verification and release gate
 
-TDD backend/schema/security and lifecycle tests; real backend browser flows; test at 1440/1024/768/390; independent failure fixtures; fresh disposable installation; five audit passes with evidence. Current known external requirement: Docker Linux daemon is stopped. Hosted credentials/local model downloads are not assumed. Never mark an unexercised provider or large benchmark verified. Version remains 0.1.0 development until all acceptance criteria pass.
+TDD backend/schema/security and lifecycle tests; real backend browser flows; test at 1440/1024/768/390; independent failure fixtures; fresh disposable installation; five audit passes with evidence. Docker Desktop fails during Inference-manager initialization on this host. No authorized model endpoint is available and no cached large weights were loaded. Never mark an unexercised provider or large benchmark verified. Version remains 0.1.0 development until all acceptance criteria pass; see the final integration audit in `docs/audits.md`.

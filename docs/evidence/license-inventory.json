@@ -1,0 +1,102 @@
+{
+  "scope": "Direct runtime dependency metadata and installed Inspect; upstream assets/licenses retain their own terms. This is not an audit of arbitrary user plugins or datasets.",
+  "python": [
+    {
+      "name": "fastapi",
+      "version": "0.160.0",
+      "license": "MIT"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.14.1",
+      "license": "MIT"
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "typer",
+      "version": "0.27.3",
+      "license": "MIT"
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.54.0",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "jsonschema",
+      "version": "4.26.0",
+      "license": "MIT"
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "license": "BSD-3-Clause"
+    },
+    {
+      "name": "inspect-ai",
+      "version": "0.3.283",
+      "license": "MIT License"
+    }
+  ],
+  "web": [
+    {
+      "name": "@tanstack/react-query",
+      "version": "5.104.5",
+      "license": "MIT"
+    },
+    {
+      "name": "class-variance-authority",
+      "version": "0.7.1",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "clsx",
+      "version": "2.1.1",
+      "license": "MIT"
+    },
+    {
+      "name": "geist",
+      "version": "1.8.2",
+      "license": "SIL OPEN FONT LICENSE"
+    },
+    {
+      "name": "lucide-react",
+      "version": "1.61.0",
+      "license": "ISC"
+    },
+    {
+      "name": "next",
+      "version": "16.4.2",
+      "license": "MIT"
+    },
+    {
+      "name": "radix-ui",
+      "version": "1.8.1",
+      "license": "MIT"
+    },
+    {
+      "name": "react",
+      "version": "19.3.1",
+      "license": "MIT"
+    },
+    {
+      "name": "react-dom",
+      "version": "19.3.1",
+      "license": "MIT"
+    },
+    {
+      "name": "recharts",
+      "version": "3.8.0",
+      "license": "MIT"
+    },
+    {
+      "name": "tailwind-merge",
+      "version": "3.7.0",
+      "license": "MIT"
+    }
+  ]
+}

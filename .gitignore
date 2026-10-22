@@ -22,4 +22,5 @@ playwright-report/
 *.log
 *.tsbuildinfo
 .agents/skills/
+.playwright-cli/
 

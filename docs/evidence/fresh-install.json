@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "installed_distribution": "benchlab 0.1.0",
+  "isolated_venv": true,
+  "sdk_demo": "8/8 reference, 0/8 deliberate negative",
+  "cli_shared_storage": "passed",
+  "api_shared_storage": "passed",
+  "exports": [
+    "json",
+    "csv",
+    "html",
+    "zip"
+  ]
+}

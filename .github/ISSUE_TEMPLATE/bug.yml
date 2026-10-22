@@ -1,0 +1,21 @@
+name: Bug report
+description: Report reproducible incorrect behavior, without credentials or private traces.
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and observed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction and environment
+      description: Include version, OS, adapter, benchmark revision and redacted doctor output.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted evidence
+      description: Remove credentials, private source and personal data before posting.

@@ -1,0 +1,9 @@
+{
+  "real_model_smoke": [
+    {
+      "status": "BLOCKED \u2014 endpoint unavailable",
+      "reason": "No explicit model endpoint environment configuration is present; local Ollama was checked separately and is not running. Cached 7B/14B weights were not loaded."
+    }
+  ],
+  "credentials_printed": false
+}

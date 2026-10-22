@@ -1,0 +1,9 @@
+{
+  "name": "Native Codex public text fixture smoke",
+  "mode": "native",
+  "systems": [{"agent_id": "configured-codex"}],
+  "task_ids": ["reasoning-inventory"],
+  "isolation": "workspace",
+  "allow_host_process": true,
+  "demo": false
+}

@@ -21,10 +21,12 @@
 
 BenchLab is an open-source experimental laboratory designed to evaluate models, autonomous agents, and execution harnesses under controlled, reproducible conditions. Instead of collapsing diverse capabilities into an opaque, self-reported leaderboard score, BenchLab executes tasks across isolated environments, captures observable trace events, evaluates outcomes with decoupled verifiers, and exports audit-grade evidence packages.
 
+**Release gate:** this is a tested development build, version 0.1.0. The real-model smoke test is **BLOCKED — endpoint unavailable**. Docker sandbox runtime tests are blocked by this host's Docker Desktop startup error. Local HTTP fixtures verify the provider/harness pipeline; they do not verify model intelligence. See [audit evidence and remaining gates](docs/audits.md).
+
 The browser dashboard, terminal CLI, and Python SDK operate against a unified local SQLite workspace. **No hosted accounts, paid cloud subscriptions, or external database services are required for local operation and offline demonstrations.**
 
 ![BenchLab Research Workspace](docs/evidence/overview-1440.png)
-<p align="center"><em>BenchLab research workspace: 12 API-backed screens featuring live execution streaming, trace replay, and head-to-head statistical comparisons.</em></p>
+<p align="center"><em>BenchLab research workspace: 12 API-backed screens featuring live polling, trace replay, and statistical comparisons. Demonstration results are labeled.</em></p>
 
 ---
 
@@ -34,7 +36,7 @@ Traditional evaluation approaches often suffer from data contamination, brittle 
 
 | Feature / Dimension | Traditional Leaderboards | Raw Eval Scripts | BenchLab Laboratory |
 | :--- | :--- | :--- | :--- |
-| **Verification Authority** | Model self-assessment / LLM judge | Ad-hoc script assertions | **Decoupled independent verifiers** (exact, numeric, schema, state, container execution) |
+| **Verification Authority** | Model self-assessment / LLM judge | Ad-hoc script assertions | **Decoupled independent verifiers** (exact, JSON/schema, file state, Docker Python) |
 | **Execution Evidence** | Single summary percentage | Terminal log printouts | **Append-only trace stream**, event inspection, and workspace filesystem diffs |
 | **Failure Diagnostics** | Opaque pass / fail count | Unstructured stack traces | **Explicit failure classification** (timeout, token budget, tool failure, verification rejection) |
 | **Statistical Rigor** | Point estimates | Simple arithmetic means | **Wilson 95% confidence intervals**, paired exact McNemar tests, condition fingerprinting |
@@ -74,7 +76,7 @@ flowchart TD
 
     subgraph Verification ["Independent Verification Pipeline"]
         OBS["Trace Observation Stream<br/>(OpenTelemetry conventions)"]
-        VERIFIER["Decoupled Verifiers<br/>• Canonical String / Regex<br/>• Numeric Tolerance<br/>• JSON Schema / Equality<br/>• State Machine / Ledger<br/>• Container Python Execution"]
+        VERIFIER["Decoupled Verifiers<br/>• Exact String<br/>• JSON Schema / Equality<br/>• Filesystem State<br/>• Docker Python Execution"]
     end
 
     subgraph Analysis ["Statistical Engine & Reporting"]
@@ -162,6 +164,7 @@ cd benchmark_agents
 git switch feat/benchlab-v1
 uv sync --locked --python 3.12
 npm ci --prefix apps/web
+npm run build --prefix apps/web
 ```
 
 ```bash
@@ -171,6 +174,7 @@ cd benchmark_agents
 git switch feat/benchlab-v1
 uv sync --locked --python 3.12
 npm ci --prefix apps/web
+npm run build --prefix apps/web
 ```
 
 ### 1. Run the Zero-Credential Offline Demonstration
@@ -191,6 +195,8 @@ Start the local API and Next.js web dashboard in a single command:
 ```powershell
 uv run benchlab ui
 ```
+
+At the default API port, this uses the production build when present. Without a build, or with a custom API port, it launches the development server; the first page compiles on demand and can be slow on memory-constrained machines. Dev/build scripts disable Next.js telemetry by default.
 
 * **Web Dashboard:** [http://127.0.0.1:3000](http://127.0.0.1:3000)
 * **REST API OpenAPI Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
@@ -244,11 +250,11 @@ For endpoints exposing `/v1/chat/completions`, create a configuration referencin
 
 ```json
 {
-  "id": "configured-vllm",
+  "id": "configured-endpoint",
   "name": "Local vLLM Server",
   "adapter": "openai-compatible",
   "model": "meta-llama/Llama-3.2-3B-Instruct",
-  "base_url": "http://127.0.0.1:8000/v1",
+  "base_url": "http://127.0.0.1:1234/v1",
   "api_key_env": "BENCHLAB_PROVIDER_KEY",
   "capabilities": ["text"],
   "demo": false
@@ -258,12 +264,12 @@ For endpoints exposing `/v1/chat/completions`, create a configuration referencin
 ```powershell
 $env:BENCHLAB_PROVIDER_KEY = "your-key-if-required"
 uv run benchlab models add examples/openai-compatible-model.json
-uv run benchlab models probe configured-vllm
-uv run benchlab run --model configured-vllm --benchmark starter-v1 --trials 3
+uv run benchlab models probe configured-endpoint
+uv run benchlab run --model configured-endpoint --benchmark starter-v1 --trials 3
 ```
 
 > [!SECURITY]
-> Raw API keys are never stored in SQLite or configuration files. BenchLab only persists the environment variable name (`api_key_env`) and redacts authorization tokens from exports and traces.
+> Configure secrets through environment variables. BenchLab stores their names and applies best-effort redaction to records and reports. Do not paste credentials into descriptions, arguments, output or configuration values.
 
 ---
 
@@ -281,10 +287,14 @@ Evaluating native CLI executables involves privileged host processes. BenchLab e
 
 ```powershell
 $env:BENCHLAB_ALLOW_HOST_PROCESS = "1"
-uv run benchlab run --agent codex-cli --benchmark starter-v1 --allow-host-process
+uv run benchlab agents add examples/codex-agent.json
+uv run benchlab agents probe configured-codex
+uv run benchlab run --config examples/native-experiment.json
 ```
 
-* **Process Isolation:** The child process executes directly without a shell, receives the task prompt on `stdin`, and writes to `stdout`.
+Native agent execution also requires an authorized provider configuration. The fresh task profile does not inherit existing CLI login files. This example was contract-tested; a credentialed Codex run was not performed. See [integration requirements](docs/integrations.md).
+
+* **Process execution:** Generic subprocesses receive prompts on stdin; Codex/OpenCode receive one prompt argument and return JSONL. Known Windows npm launchers resolve to their native executable or Node entry point without a command shell.
 * **Environment Sanitization:** Full host environment inheritance is blocked. `HOME`, `USERPROFILE`, and config directories are quarantined to a clean, isolated task workspace.
 * **Filesystem Diffing:** Any file modifications in the workspace are captured as unified diffs and persisted as observable evidence.
 
@@ -306,10 +316,10 @@ The `benchlab` CLI shares the exact same database and execution engine as the we
 | `benchlab worker` | None | Runs a headless background worker daemon processing the SQLite queue. |
 | `benchlab models list` | None | Lists all registered model endpoints. |
 | `benchlab models add` | `CONFIG_PATH` | Registers a model endpoint from a JSON or TOML file. |
-| `benchlab models probe` | `MODEL_ID` | Validates connectivity, capabilities, and advertised context size. |
+| `benchlab models probe` | `MODEL_ID` | Checks connectivity and advertised model ID; capabilities/context are declared, not proven by discovery. |
 | `benchlab agents list` | None | Lists all registered agent harness configurations. |
 | `benchlab agents add` | `CONFIG_PATH` | Registers an agent executable configuration. |
-| `benchlab agents probe` | `AGENT_ID` | Verifies executable availability and CLI flag contracts. |
+| `benchlab agents probe` | `AGENT_ID` | Checks executable availability and supported launcher resolution. |
 | `benchlab benchmarks list` | None | Lists available benchmark packs and requirement gates. |
 | `benchlab experiments list` | None | Lists persisted experiments and high-level status. |
 | `benchlab experiments show` | `EXPERIMENT_ID` | Displays complete manifest, run records, and trial details. |
@@ -337,7 +347,7 @@ async def main():
             SystemSpec(model_id="local-ollama"),
         ],
         trials=3,
-        timeout_seconds=30,
+        task_timeout_seconds=30,
     )
 
     # Submit and execute asynchronously
@@ -364,7 +374,7 @@ if __name__ == "__main__":
 
 ## Verification Engine & Sandboxing
 
-BenchLab enforces a strict separation between generation and verification. Evaluated systems never see the expected answers, and verifiers operate outside the agent workspace.
+BenchLab separates generation and verification. Requests contain task prompts rather than verifier expected answers. Public fixtures and trusted local plugin source remain inspectable; this is not a formal anti-cheat boundary.
 
 ```mermaid
 flowchart LR
@@ -377,20 +387,19 @@ flowchart LR
 
 ### Supported Verifier Strategies
 
-1. **Exact & Canonical Match (`exact`)**: Case-normalized, whitespace-stripped comparison with regex extraction fallbacks.
-2. **Numeric Tolerance (`numeric`)**: Floating-point parsing with configurable relative and absolute tolerance bounds.
-3. **JSON Equality & Schema (`json`)**: Structured object parsing, schema validation, and semantic key/value equivalence.
-4. **State Machine & Ledger (`state`)**: Sequential state transition verification (e.g., balance integrity across transactions).
-5. **Containerized Code Execution (`code_execution`)**: Executes generated Python code against test fixtures inside an isolated Docker sandbox.
+1. **Exact match (`exact`)**: Case-sensitive comparison after stripping surrounding whitespace.
+2. **JSON equality / schema (`json`, `schema`)**: Parse JSON, validate a configured schema, and compare expected object values where supplied. Ledger/recovery fixtures use this path to verify structured responses.
+3. **Filesystem state (`file-json`)**: Read a contained file from the actual workspace and independently compare parsed values.
+4. **Containerized Python (`python`)**: Run generated Python in Docker, require completion evidence, and compare serialized function outputs in the trusted verifier. Runtime validation is blocked on Docker Desktop on this host.
 
 ### Docker Sandbox Isolation Policy
 
 When evaluating generated code, BenchLab enforces hardened container boundaries:
-* **Network Isolation:** `--network none` (all socket access is blocked).
+* **Network Isolation:** `--network none` prevents external container networking; loopback within a container remains possible.
 * **Filesystem Protection:** Read-only root filesystem (`--read-only`) with a volatile non-executable tmpfs.
 * **Privilege De-escalation:** Runs as non-root user (`UID 65534 / nobody`), drops all Linux capabilities (`--cap-drop ALL`), and enforces `--security-opt no-new-privileges`.
 * **Zero Host Mounts:** No host filesystem volumes or Docker sockets are ever mounted into the container.
-* **Resource Caps:** Bounded memory (512MB default), CPU quota, execution timeout, and output length truncation.
+* **Resource Caps:** Bounded memory (256MB default), CPU quota, execution timeout, and capped captured output.
 
 ---
 
@@ -400,16 +409,16 @@ BenchLab includes 10 original, public, Apache-2.0 starter tasks covering diverse
 
 | Task ID | Category | Target Capability | Verification Type |
 | :--- | :--- | :--- | :--- |
-| `math-inventory` | Reasoning | Multi-step arithmetic, inventory reconciliation | Numeric equality |
-| `knowledge-http` | Knowledge | RFC 9110 HTTP status semantics | Exact canonical match |
-| `multilingual-spanish` | Language | Natural language instruction following in Spanish | Regex / keyword verification |
-| `extraction-numeric-json` | Extraction | Parsing unstructured text into structured JSON | JSON schema & key equality |
-| `tool-selection-planning` | Tool Use | Declarative tool calling plan and parameter formatting | JSON parameter verification |
-| `state-ledger-consistency` | State | Multi-step financial ledger and balance updates | State machine validation |
-| `recovery-retry-planning` | Resilience | Error recovery plan under simulated rate limits | Structural step verification |
-| `instruction-safety-constraint`| Safety | Constraint adherence under untrusted prompt injection | Strict negative-pattern check |
+| `reasoning-inventory` | Reasoning | Inventory arithmetic | Exact string equality |
+| `knowledge-protocol` | Knowledge | HTTP status semantics | Exact string equality |
+| `multilingual-es` | Language | Spanish instructions | JSON equality |
+| `structured-invoice` | Extraction | Invoice structure | JSON schema & equality |
+| `tool-weather` | Tool selection | Tool selection plan | JSON equality; no live tool invocation |
+| `multistep-ledger` | Multi-step | Ledger response | JSON equality; no live environment transitions |
+| `recovery-retry` | Recovery | Retry plan | JSON equality; no live rate-limit recovery |
+| `safety-boundary`| Safety | Untrusted instruction response | JSON equality and forbidden-content check |
 | `workspace-normalize` | Filesystem | Workspace file reorganization and clean-up | Independent disk verification |
-| `coding-dedupe` | Code Execution | Algorithmic Python implementation (O(N) deduplication) | Containerized pytest execution |
+| `coding-dedupe` | Code execution | Stable Python deduplication | Docker function-result checks; no complexity proof |
 
 ---
 
@@ -453,7 +462,7 @@ benchmark_agents/
 │   ├── plugins.md             # Custom adapter and benchmark plugin development
 │   └── troubleshooting.md     # Diagnostic procedures and common resolutions
 ├── examples/                  # Sample configurations and SDK scripts
-├── tests/                     # Comprehensive backend test suite (67 test cases)
+├── tests/                     # Backend, integration, security and browser tests
 ├── compose.yaml               # Container deployment definition (zero host-socket mount)
 ├── pyproject.toml             # Python build configuration and dependencies
 └── README.md                  # Project overview and documentation
@@ -480,7 +489,9 @@ npm test --prefix apps/web
 npm run typecheck --prefix apps/web
 npm run build --prefix apps/web
 
-# Run Playwright browser end-to-end suite (requires API and Web running)
+# Install browser-test dependencies and Chrome, then run with API and web running
+npm ci
+npx playwright install chrome
 npx playwright test
 ```
 

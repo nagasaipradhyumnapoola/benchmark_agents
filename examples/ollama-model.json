@@ -1,0 +1,9 @@
+{
+  "id": "local-ollama",
+  "name": "My local Ollama model",
+  "adapter": "ollama",
+  "model": "REPLACE_WITH_INSTALLED_MODEL_ID",
+  "base_url": "http://127.0.0.1:11434",
+  "capabilities": ["text"],
+  "demo": false
+}

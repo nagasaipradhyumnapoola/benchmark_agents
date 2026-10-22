@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "demo": true,
+  "meaning": "Execution-pipeline verification only, not model intelligence",
+  "experiment_id": "c5e0ceab-1b42-40ae-b606-245057bddf0f",
+  "runs": [
+    {
+      "system": "Full offline demo reference",
+      "tasks": 9,
+      "passed": 9
+    },
+    {
+      "system": "Full offline demo flawed",
+      "tasks": 9,
+      "passed": 0
+    }
+  ],
+  "blocked_tasks": [
+    {
+      "id": "coding-dedupe",
+      "reason": "Requires a functioning Docker Linux sandbox; host fallback prohibited"
+    }
+  ]
+}

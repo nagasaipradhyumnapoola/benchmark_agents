@@ -1,0 +1,10 @@
+{
+  "id": "configured-codex",
+  "name": "Explicitly configured native Codex",
+  "adapter": "codex-cli",
+  "executable": "codex",
+  "capabilities": ["text"],
+  "env_allowlist": ["OPENAI_API_KEY"],
+  "native": true,
+  "demo": false
+}

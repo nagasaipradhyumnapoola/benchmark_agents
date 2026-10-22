@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "environment": "Disposable .benchlab/fresh-web with copied source and lockfiles; no reused node_modules or .next",
+  "install": "npm ci --ignore-scripts",
+  "dependency_audit": "0 known vulnerabilities reported",
+  "production_build": "passed; all twelve screens and icon route",
+  "standalone_start": "passed at 127.0.0.1:3001",
+  "web_to_api_proxy": "GET /api/health returned status=ok from actual backend",
+  "temporary_server": "stopped after verification"
+}

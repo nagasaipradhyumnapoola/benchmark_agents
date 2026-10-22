@@ -1,0 +1,14 @@
+name: Feature or adapter proposal
+description: Describe a research need, supported execution contract and verification evidence.
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Research workflow and desired behavior
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification, runtime requirements and licensing
+      description: For integrations, link official public API/scoring documentation and resource requirements.

@@ -78,6 +78,8 @@ class AgentConfig(Contract):
     executable: str | None = None
     args: list[str] = Field(default_factory=list, max_length=40)
     model_flag: str | None = None
+    model_base_url_env: str | None = Field(default=None, pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")
+    model_api_key_env: str | None = Field(default=None, pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")
     capabilities: list[str] = Field(default_factory=lambda: ["text"])
     env_allowlist: list[str] = Field(default_factory=list)
     demo: bool = False
@@ -128,6 +130,7 @@ class ExperimentConfig(Contract):
     memory_mb: int = Field(default=256, ge=64, le=32768)
     cpus: float = Field(default=1, ge=0.1, le=16, allow_inf_nan=False)
     isolation: Literal["docker", "workspace"] = "docker"
+    workspace_provider: str = "builtin"
     allow_host_process: bool = False
     network: bool = False
     tools: list[str] = Field(default_factory=list)
@@ -187,7 +190,7 @@ class VerificationResult(Contract):
 class TraceEvent(Contract):
     type: str
     timestamp: str = Field(default_factory=utcnow)
-    trace_id: str = Field(default_factory=new_id)
+    trace_id: str = Field(default_factory=lambda: uuid4().hex)
     span_id: str = Field(default_factory=lambda: uuid4().hex[:16])
     parent_span_id: str | None = None
     task_id: str | None = None
@@ -250,3 +253,38 @@ class Metric(Contract):
     definition: str
     provenance: str
     available: bool = True
+
+
+class Experiment(Contract):
+    """Persisted experiment record, separate from immutable launch configuration."""
+
+    id: str
+    name: str
+    mode: Mode
+    config: ExperimentConfig
+    status: Status
+    demo: bool
+    created_at: str
+    updated_at: str
+    started_at: str | None = None
+    finished_at: str | None = None
+    error: str | None = None
+
+
+class RunResult(Contract):
+    """A durable execution record; completed orchestration is not verifier success."""
+
+    id: str
+    experiment_id: str
+    system_id: str
+    system_name: str
+    trial: int
+    status: Status
+    manifest: RunManifest
+    metrics: dict[str, Any] = Field(default_factory=dict)
+    demo: bool
+    started_at: str | None = None
+    finished_at: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    error: str | None = None
