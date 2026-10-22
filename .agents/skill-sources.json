@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0",
+  "local_installs": [
+    {"repository": "pbakaus/impeccable", "revision": "c4cfe525de176bd4c8b3291e91082a253e1bc0d7", "path": ".agents/skills/impeccable", "installation": "Official Codex skill-installer; source guidance reviewed; executable launcher not run"}
+  ],
+  "shared_skills": "Other requested collections are installed in the user's Codex skills directories. They are development guidance, not application runtime dependencies.",
+  "authority": "Explicit user requirements override skill defaults and approval prompts."
+}
