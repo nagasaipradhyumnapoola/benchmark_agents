@@ -14,12 +14,18 @@ from rich.console import Console
 
 from benchlab.adapters.registry import probe_agent, probe_model
 from benchlab.schemas import AgentConfig, ExperimentConfig, ModelConfig, SystemSpec
-from benchlab.settings import environment_setting, redact
-from benchlab.terminal_ui import execute_with_progress, render_banner, render_menu, render_results
+from benchlab.settings import environment_setting
+from benchlab.terminal_ui import (
+    execute_with_progress,
+    render_banner,
+    render_menu,
+    render_results,
+    terminal_text,
+)
 
 
 def say(message):
-    typer.echo(redact(str(message)))
+    typer.echo(terminal_text(message))
 
 
 def number(label, default, minimum=1, maximum=50):
@@ -74,7 +80,9 @@ def connect_model(lab):
     say("  1. OpenAI-compatible chat endpoint\n  2. Ollama")
     adapter = "openai-compatible" if number("Adapter", 1, maximum=2) == 1 else "ollama"
     say("  1. Local server\n  2. Hosted API")
-    connection: Literal["local", "hosted"] = "local" if number("Connection type", 1, maximum=2) == 1 else "hosted"
+    connection: Literal["local", "hosted"] = (
+        "local" if number("Connection type", 1, maximum=2) == 1 else "hosted"
+    )
     base = typer.prompt(
         "Endpoint base URL",
         default="http://127.0.0.1:1234/v1"

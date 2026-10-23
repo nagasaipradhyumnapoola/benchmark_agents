@@ -1,6 +1,7 @@
 """Terminal presentation: original banner, readable tables, and observed live progress."""
 
 import asyncio
+import re
 import time
 
 from rich import box
@@ -28,8 +29,18 @@ _FONT = {
 }
 
 
+def terminal_text(value):
+    # Render untrusted control bytes visibly; never let a publisher/provider
+    # issue terminal commands, clipboard requests, carriage returns or bidi overrides.
+    return re.sub(
+        r"[\x00-\x08\x0b-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]",
+        lambda match: f"\\u{ord(match.group()):04x}",
+        str(redact(value)),
+    )
+
+
 def safe(value, style=""):
-    return Text(str(redact(value)), style=style)
+    return Text(terminal_text(value), style=style)
 
 
 def render_banner(console, lab):

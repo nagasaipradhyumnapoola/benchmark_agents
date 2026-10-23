@@ -4,6 +4,24 @@ from benchlab.cli import app
 from benchlab.store import Store
 
 
+def test_untrusted_names_cannot_send_controls_to_a_terminal(monkeypatch):
+    import io
+    from contextlib import redirect_stdout
+
+    from benchlab.terminal import say
+
+    class Tty(io.StringIO):
+        def isatty(self):
+            return True
+
+    captured = Tty()
+    with redirect_stdout(captured):
+        say("name\x1b]52;c;YXVkaXQ=\x07\x1b[2J\rspoof")
+    result = captured.getvalue()
+    assert "\x1b" not in result and "\x07" not in result and "\r" not in result
+    assert "name" in result and "spoof" in result
+
+
 def test_terminal_starts_empty_and_exits_without_creating_records(tmp_path, monkeypatch):
     monkeypatch.setenv("BENCHLAB_DATA_DIR", str(tmp_path))
     result = CliRunner().invoke(app, ["terminal"], input="0\n")
