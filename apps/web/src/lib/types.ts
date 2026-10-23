@@ -6,6 +6,7 @@ export interface ModelConfig {
   model: string;
   base_url?: string | null;
   api_key_env?: string | null;
+  connection_type?: "local" | "hosted" | null;
   capabilities: string[];
   context_window?: number | null;
   input_cost_per_million?: number | null;

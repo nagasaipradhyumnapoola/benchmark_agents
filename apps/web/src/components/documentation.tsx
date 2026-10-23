@@ -84,8 +84,9 @@ export function Documentation() {
               the native adapter uses the server root.
             </p>
             <p>
-              Set a provider API key in the backend environment, then enter its
-              variable name in the model form. Never paste the secret value.
+              Choose a hidden session API key or reference a variable in the
+              backend environment. Session keys need re-entry after restart.
+              Keep secret values out of URLs, names and published source.
               Declare capabilities the adapter can actually fulfill. Run{" "}
               <strong>Probe compatibility</strong> from the inspector before
               creating an experiment.
@@ -217,6 +218,49 @@ export function Documentation() {
               results do not measure model intelligence.
             </p>
             <DemoButton />
+            <h2 id="agent-hub">Publish and import agents</h2>
+            <p>
+              <Link href="/hub">Agent Hub</Link> is the connected source
+              registry. It starts empty. Browse and import without an account;
+              create an account to publish, comment and share results.
+            </p>
+            <ol>
+              <li>
+                <strong>Publish an agent:</strong> provide a unique slug,
+                semantic version, license, README and Python or Node.js source.
+                The harness reads a prompt from stdin and writes its final
+                answer to stdout. Add the script entrypoint and recommended
+                model IDs.
+              </li>
+              <li>
+                <strong>Configure model bindings:</strong> declare the model
+                flag and endpoint/key environment variable names your harness
+                expects. Declare dependencies; users review and install them
+                separately. Credentials belong in private model settings.
+              </li>
+              <li>
+                <strong>Import agent:</strong> inspect usage, source and the
+                release digest first. Import stages that version locally without
+                execution or dependency installation.
+              </li>
+              <li>
+                <strong>Benchmark imported agent:</strong> connect a model,
+                select one quick task and validate. Trusted host execution needs
+                both the server setting and explicit experiment authorization.
+              </li>
+              <li>
+                <strong>Share a completed run:</strong> use its Agent Hub link
+                to publish the actual summary to the original release. Reports
+                are self-reported; the registry did not run your benchmark.
+              </li>
+            </ol>
+            <p>
+              Owners publish new immutable versions for changes. Arbitrary
+              frameworks may need a compatible wrapper and separate
+              dependencies. Community suggestions use a reviewed GitHub catalog;
+              publishing source happens in Agent Hub. The private Lab stays on
+              your machine.
+            </p>
             <h2 id="api">API and local tools</h2>
             <p>
               The backend exposes its interactive OpenAPI reference at{" "}
@@ -241,6 +285,7 @@ export function Documentation() {
             >
               {[
                 ["first-run", "First experiment"],
+                ["agent-hub", "Publish & import agents"],
                 ["terminal", "Terminal interface"],
                 ["models", "Configure a model"],
                 ["agents", "Configure an agent"],

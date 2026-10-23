@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FlaskConical, Play, ShieldCheck } from "lucide-react";
@@ -48,6 +48,19 @@ export const defaultExperiment: ExperimentConfig = {
 export function validateExperiment(config: ExperimentConfig): string | null {
   if (!config.name.trim()) return "Name the experiment before validating.";
   if (!config.systems.length) return "Select at least one system to evaluate.";
+  if (config.systems.length > 16)
+    return "Select at most 16 systems per experiment.";
+  if (
+    config.mode === "matrix" &&
+    config.systems.some((s) => !s.model_id || !s.agent_id)
+  )
+    return "Each matrix pair needs a model and a controlled agent.";
+  if (
+    config.mode === "matrix" &&
+    new Set(config.systems.map((s) => `${s.model_id}:${s.agent_id}`)).size !==
+      config.systems.length
+  )
+    return "Matrix pairs must be unique.";
   if (config.trials < 1 || config.trials > 50)
     return "Trials must be between 1 and 50.";
   if (config.budget_seconds <= 0)
@@ -78,19 +91,42 @@ export function Builder() {
   }));
   const catalog = useApi<Benchmark>(`/benchmarks/${config.benchmark_id}`);
   const [sharedModel, setSharedModel] = useState("");
+  const [matrixModels, setMatrixModels] = useState<string[]>([]);
+  const [matrixAgents, setMatrixAgents] = useState<string[]>([]);
+  const revision = useRef(0);
+  const validatedRevision = useRef(0);
   const [validation, setValidation] = useState<Compatibility | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [advanced, setAdvanced] = useState("");
   const validate = useAction<Compatibility>(
     "/experiments/validate",
-    setValidation,
+    (result) => {
+      if (validatedRevision.current === revision.current) setValidation(result);
+    },
   );
   const launch = useAction<Experiment>("/experiments", (row) =>
     router.push(`/experiments?id=${row.id}`),
   );
   function update(key: string, value: unknown) {
+    revision.current += 1;
     setConfig((c) => ({ ...c, [key]: value }));
     setValidation(null);
+  }
+  function matrixToggle(kind: "models" | "agents", id: string) {
+    const selected = kind === "models" ? matrixModels : matrixAgents;
+    const next = selected.includes(id)
+      ? selected.filter((value) => value !== id)
+      : [...selected, id];
+    const modelIds = kind === "models" ? next : matrixModels;
+    const agentIds = kind === "agents" ? next : matrixAgents;
+    if (kind === "models") setMatrixModels(next);
+    else setMatrixAgents(next);
+    update(
+      "systems",
+      modelIds.flatMap((model_id) =>
+        agentIds.map((agent_id) => ({ model_id, agent_id })),
+      ),
+    );
   }
   function systemToggle(system: SystemSpec) {
     const key = JSON.stringify(system);
@@ -122,8 +158,29 @@ export function Builder() {
         return;
       }
       setLocalError(null);
+      if (
+        data.mode === "matrix" &&
+        data.systems.some(
+          (s: SystemSpec) =>
+            !models.data?.some((m) => m.id === s.model_id) ||
+            !agents.data?.some(
+              (a) =>
+                a.id === s.agent_id &&
+                !a.config.native &&
+                a.config.adapter === "subprocess",
+            ),
+        )
+      ) {
+        setLocalError(
+          "Matrix pairs require registered models and controlled subprocess agents.",
+        );
+        return;
+      }
       if (execute) launch.mutate(data);
-      else validate.mutate(data);
+      else {
+        validatedRevision.current = revision.current;
+        validate.mutate(data);
+      }
     } catch {
       setLocalError("Advanced overrides must contain a valid JSON object.");
     }
@@ -132,15 +189,20 @@ export function Builder() {
     agents.data?.filter((agent) =>
       config.mode === "native"
         ? agent.config.native
-        : config.mode === "agent"
-          ? !agent.config.native
-          : true,
+        : config.mode === "matrix"
+          ? !agent.config.native && agent.config.adapter === "subprocess"
+          : config.mode === "agent"
+            ? !agent.config.native
+            : true,
     ) ?? [];
   const selectedDemo = config.systems.some(
     (s) =>
       models.data?.find((m) => m.id === s.model_id)?.config.demo ||
       agents.data?.find((a) => a.id === s.agent_id)?.config.demo,
   );
+  const matrixBlocked =
+    config.mode === "matrix" &&
+    (!config.systems.length || config.systems.length > 16);
   return (
     <>
       <PageTitle
@@ -183,6 +245,8 @@ export function Builder() {
                         onChange={(e) => {
                           update("mode", e.target.value);
                           update("systems", []);
+                          setMatrixModels([]);
+                          setMatrixAgents([]);
                         }}
                       >
                         {[
@@ -195,7 +259,19 @@ export function Builder() {
                           "baseline",
                         ].map((m) => (
                           <option key={m} value={m}>
-                            {m}
+                            {
+                              (
+                                {
+                                  model: "Models only",
+                                  agent: "Agents with one shared model",
+                                  native: "Native agent products",
+                                  matrix: "Multiple agents × multiple models",
+                                  ablation: "Ablation comparison",
+                                  reliability: "Reliability trials",
+                                  baseline: "Baseline comparison",
+                                } as Record<string, string>
+                              )[m]
+                            }
                           </option>
                         ))}
                       </select>
@@ -215,7 +291,9 @@ export function Builder() {
                   <p className="muted text-xs mb-3">
                     {config.mode === "model"
                       ? "Select the registered models to evaluate. For a first run, one model is enough."
-                      : "Controlled agent comparisons use one shared model. Native mode uses each installed product's own model and settings."}
+                      : config.mode === "matrix"
+                        ? "Select models and controlled subprocess agents independently. Every selected model is paired with every selected agent, up to 16 pairs. Native products are available in Native agent products mode."
+                        : "Controlled agent comparisons use one shared model. Native mode uses each installed product's own model and settings."}
                   </p>
                   {(
                     config.mode === "model"
@@ -246,7 +324,54 @@ export function Builder() {
                       </div>
                     </div>
                   ) : null}
-                  {["agent", "native", "matrix"].includes(config.mode) ? (
+                  {config.mode === "matrix" ? (
+                    <>
+                      <h3 className="text-sm mt-3">Models</h3>
+                      {models.data?.map((m) => (
+                        <label className="check-row" key={m.id}>
+                          <input
+                            type="checkbox"
+                            checked={matrixModels.includes(m.id)}
+                            onChange={() => matrixToggle("models", m.id)}
+                          />
+                          <span>
+                            <strong>
+                              {m.config.name}{" "}
+                              {m.config.demo ? <Demo compact /> : null}
+                            </strong>
+                            <small>
+                              {m.config.model} ·{" "}
+                              {m.config.connection_type ?? m.config.adapter}
+                            </small>
+                          </span>
+                        </label>
+                      ))}
+                      <h3 className="text-sm mt-4">Controlled agents</h3>
+                      {availableAgents.map((a) => (
+                        <label className="check-row" key={a.id}>
+                          <input
+                            type="checkbox"
+                            checked={matrixAgents.includes(a.id)}
+                            onChange={() => matrixToggle("agents", a.id)}
+                          />
+                          <span>
+                            <strong>{a.config.name}</strong>
+                            <small>
+                              {a.config.adapter} ·{" "}
+                              {a.config.capabilities.join(", ")}
+                            </small>
+                          </span>
+                        </label>
+                      ))}
+                      {matrixBlocked ? (
+                        <p className="notice error" role="status">
+                          {config.systems.length > 16
+                            ? `${config.systems.length} pairs exceeds the limit of 16. Deselect models or agents to continue.`
+                            : "Select at least one model and one controlled agent."}
+                        </p>
+                      ) : null}
+                    </>
+                  ) : ["agent", "native"].includes(config.mode) ? (
                     <>
                       {config.mode !== "native" ? (
                         <label className="field mb-3">
@@ -601,6 +726,7 @@ export function Builder() {
                         value={advanced}
                         onChange={(e) => {
                           setAdvanced(e.target.value);
+                          revision.current += 1;
                           setValidation(null);
                         }}
                         placeholder={
@@ -656,7 +782,9 @@ export function Builder() {
                     <Button
                       variant="outline"
                       type="submit"
-                      disabled={validate.isPending || launch.isPending}
+                      disabled={
+                        validate.isPending || launch.isPending || matrixBlocked
+                      }
                     >
                       <ShieldCheck size={14} />
                       {validate.isPending
@@ -665,7 +793,11 @@ export function Builder() {
                     </Button>
                     <Button
                       type="button"
-                      disabled={!validation?.compatible || launch.isPending}
+                      disabled={
+                        !validation?.compatible ||
+                        launch.isPending ||
+                        matrixBlocked
+                      }
                       onClick={() => act(true)}
                     >
                       <Play size={14} />
@@ -680,6 +812,36 @@ export function Builder() {
           </div>
           <div className="stack">
             <Panel title="Execution plan">
+              {config.mode === "matrix" ? (
+                <div className="panel-body">
+                  <h3 className="text-sm">Selected pairs</h3>
+                  <ul className="text-xs mt-3 space-y-2">
+                    {config.systems.map((s) => (
+                      <li key={`${s.model_id}:${s.agent_id}`}>
+                        {
+                          agents.data?.find((a) => a.id === s.agent_id)?.config
+                            .name
+                        }{" "}
+                        ×{" "}
+                        {
+                          models.data?.find((m) => m.id === s.model_id)?.config
+                            .name
+                        }
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="registration-note mt-4">
+                    {(config.task_ids.length || 8) *
+                      config.trials *
+                      config.systems.length}{" "}
+                    task checks
+                  </p>
+                  <p className="registration-note">
+                    Tasks × trials × pairs. Pairs run sequentially within the
+                    total budget.
+                  </p>
+                </div>
+              ) : null}
               <dl className="summary-list">
                 <dt>Systems</dt>
                 <dd>{config.systems.length}</dd>

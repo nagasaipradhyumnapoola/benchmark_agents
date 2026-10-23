@@ -11,6 +11,7 @@ from pathlib import Path
 import httpx
 
 import benchlab
+from benchlab.hub import create_hub_app
 from benchlab.sdk import Laboratory
 
 
@@ -18,6 +19,9 @@ async def main():
     root = Path.cwd().resolve()
     assert "site-packages" in str(benchlab.__file__)
     data = root / "data"
+    hub = create_hub_app(root / "registry")
+    assert any(route.path == "/v1/health" for route in hub.routes)
+    assert not any(route.path == "/api/models" for route in hub.routes)
     os.environ["BENCH_AGENTS_DATA_DIR"] = str(data)
     lab = Laboratory(data)
     experiment = await lab.demo()
@@ -67,6 +71,9 @@ async def main():
                 raise RuntimeError("Installed wheel API did not become ready")
             assert any(row["id"] == experiment["id"] for row in response.json())
             assert client.get("http://127.0.0.1:8001/openapi.json").status_code == 200
+            community = client.get("http://127.0.0.1:8001/api/community")
+            community.raise_for_status()
+            assert isinstance(community.json()["published"], list)
     finally:
         server.terminate()
         try:
@@ -83,6 +90,8 @@ async def main():
                 "sdk_demo": "8/8 reference, 0/8 deliberate negative",
                 "cli_shared_storage": "passed",
                 "api_shared_storage": "passed",
+                "community_catalog_packaged": "passed",
+                "separate_hub_modules_packaged": "passed",
                 "exports": ["json", "csv", "html", "zip"],
             },
             indent=2,

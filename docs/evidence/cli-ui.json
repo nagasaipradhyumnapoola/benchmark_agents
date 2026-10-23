@@ -1,17 +1,17 @@
 {
   "status": "passed",
-  "command": "uv run bench-agents ui",
-  "mode": "production build at default API port",
-  "native_node_launch_without_cmd_shell": true,
-  "api_startup": "passed",
-  "web_page_http_200": "passed",
-  "web_api_proxy": "passed",
+  "startup": "bench-agents ui",
+  "web_port": 3000,
+  "private_api_port": 8000,
+  "separate_hub_port": 8100,
   "empty_live_inventory": {
     "models": 0,
     "agents": 0,
     "experiments": 0,
-    "runs": 0
+    "runs": 0,
+    "hub_agents": 0,
+    "community_drafts": 0,
+    "hub_accounts": 0
   },
-  "host_agents_enabled": false,
-  "telemetry_disabled": true
+  "model_weights_loaded": false
 }

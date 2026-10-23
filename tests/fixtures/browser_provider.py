@@ -1,9 +1,13 @@
 """Loopback-only protocol fixture for browser tests; never a model capability score."""
 
 import json
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 calls = []
+authenticated = "--authenticated" in sys.argv
+model_id = "browser-key-model" if authenticated else "browser-wire-model"
+fixture_key = "browser-session-fixture-key"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -16,15 +20,25 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(payload).encode())
 
+    def authorized(self):
+        if authenticated and self.headers.get("Authorization") != "Bearer " + fixture_key:
+            self.send_response(401)
+            self.end_headers()
+            return False
+        return True
+
     def do_GET(self):
         if self.path == "/stats":
             self.send({"requests": len(calls), "models": [body["model"] for body in calls]})
         else:
-            self.send({"data": [{"id": "browser-wire-model"}]})
+            if self.authorized():
+                self.send({"data": [{"id": model_id}]})
 
     def do_POST(self):
+        if not self.authorized():
+            return
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-        assert body["model"] == "browser-wire-model"
+        assert body["model"] == model_id
         assert "expected" not in body
         calls.append(body)
         self.send({"choices": [{"message": {"content": "37"}}]})

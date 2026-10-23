@@ -47,6 +47,9 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix apps/web
       - run: npx playwright install --with-deps chrome
+      - run: uv run uvicorn benchlab.hub:app_factory --factory --host 127.0.0.1 --port 8100 > /tmp/bench-agents-hub.log 2>&1 &
+        env:
+          BENCH_AGENTS_HUB_DATA_DIR: .bench-agents/browser-hub-tests
       - run: uv run uvicorn benchlab.api:app_factory --factory --host 127.0.0.1 --port 8000 > /tmp/bench-agents-api.log 2>&1 &
         env:
           BENCH_AGENTS_DATA_DIR: .bench-agents/browser-tests

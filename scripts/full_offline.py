@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 from benchlab.benchmarks.catalog import TASKS
@@ -11,7 +12,9 @@ from benchlab.store import Store
 
 
 async def main():
-    store = Store(Path(".bench-agents/full-offline"))
+    store = Store(
+        Path(".bench-agents/full-offline") / datetime.now(UTC).strftime("%Y%m%dT%H%M%S%f")
+    )
     systems = []
     for variant in ["reference", "flawed"]:
         model = store.save_model(

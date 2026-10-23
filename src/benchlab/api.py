@@ -17,8 +17,15 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import ValidationError
 
 from benchlab import __version__
-from benchlab.schemas import AgentConfig, ExperimentConfig, ModelConfig
-from benchlab.service import demo_config, diagnostics, install_demo_inventory
+from benchlab.credentials import forget_key, is_session_reference, remember_key
+from benchlab.schemas import (
+    AgentConfig,
+    ExperimentConfig,
+    ModelConfig,
+    ModelConnection,
+    ModelCredential,
+)
+from benchlab.service import connect_model, demo_config, diagnostics, install_demo_inventory
 from benchlab.settings import Settings, environment_setting, redact
 from benchlab.telemetry import FAILURE_CATEGORIES, metric_registry
 
@@ -62,6 +69,14 @@ def create_app(data_dir: Path | None = None, *, run_worker: bool = True) -> Fast
     application = FastAPI(title="Bench Agents API", version=__version__, lifespan=lifespan)
     application.state.store = store
     application.state.engine = engine
+
+    from benchlab.community import build_community_router
+
+    application.include_router(build_community_router(store))
+
+    from benchlab.hub_client import create_hub_router
+
+    application.include_router(create_hub_router(store))
 
     @application.middleware("http")
     async def protect_local_api(request: Request, call_next):
@@ -158,7 +173,22 @@ def create_app(data_dir: Path | None = None, *, run_worker: bool = True) -> Fast
 
     @application.post("/api/models", status_code=201)
     def add_model(config: ModelConfig) -> dict:
-        return store.save_model(config)
+        return connect_model(store, config)
+
+    @application.post("/api/models/connect", status_code=201)
+    def model_connect(connection: ModelConnection) -> dict:
+        key = connection.api_key.get_secret_value() if connection.api_key is not None else None
+        return connect_model(store, connection.config, api_key=key)
+
+    @application.post("/api/models/{model_id}/credential")
+    def model_credential(model_id: str, credential: ModelCredential) -> dict:
+        reference = store.get_model(model_id)["config"].get("api_key_env")
+        if not is_session_reference(reference):
+            raise ValueError(
+                "Credential re-entry requires an existing session credential reference"
+            )
+        remember_key(credential.api_key.get_secret_value(), reference)
+        return {"configured": True, "scope": "session"}
 
     @application.get("/api/models/{model_id}")
     def model_detail(model_id: str) -> dict:
@@ -166,7 +196,9 @@ def create_app(data_dir: Path | None = None, *, run_worker: bool = True) -> Fast
 
     @application.delete("/api/models/{model_id}", status_code=204)
     def delete_model(model_id: str) -> Response:
+        reference = store.get_model(model_id)["config"].get("api_key_env")
         store.delete_model(model_id)
+        forget_key(reference)
         return Response(status_code=204)
 
     @application.post("/api/models/{model_id}/probe")

@@ -12,6 +12,7 @@ from typing import Any
 import httpx
 import psutil
 
+from benchlab.credentials import get_key, missing_key_message
 from benchlab.sandbox import _drain
 from benchlab.schemas import AdapterOutput, CompatibilityResult, TraceEvent
 from benchlab.settings import environment_setting, redact
@@ -123,9 +124,9 @@ def process_environment(agent, workspace, model=None):
                 raise ValueError("Selected model has no base_url to bind to this harness")
             result[agent.model_base_url_env] = model.base_url
         if agent.model_api_key_env and model.api_key_env:
-            secret = os.environ.get(model.api_key_env)
+            secret = get_key(model.api_key_env)
             if not secret:
-                raise ValueError("Selected model credential environment variable is unset")
+                raise ValueError(missing_key_message(model.api_key_env))
             result[agent.model_api_key_env] = secret
     return result
 
@@ -134,6 +135,15 @@ def validate_system_config(system, model, agent, config) -> CompatibilityResult:
     """Static binding validation shared by preflight and execution; no processes or network."""
     reasons = []
     warnings = []
+    if config.mode == "matrix":
+        if not model or not agent:
+            reasons.append(
+                "Matrix mode requires an explicit model and controlled agent for every pair"
+            )
+        if agent and (agent.native or agent.adapter in {"codex-cli", "opencode-cli"}):
+            reasons.append(
+                "Native products require native mode and cannot participate in a controlled matrix"
+            )
     if (
         config.tools
         and (agent or model)
@@ -259,9 +269,9 @@ async def _provider(model, task, config, parameters):
         raise ValueError("Provider base_url is required")
     headers = {}
     if model.api_key_env:
-        key = os.environ.get(model.api_key_env)
+        key = get_key(model.api_key_env)
         if not key:
-            raise ValueError(f"Credential environment variable {model.api_key_env} is unset")
+            raise ValueError(missing_key_message(model.api_key_env))
         headers["Authorization"] = "Bearer " + key
     messages = [{"role": "user", "content": task.prompt}]
     unsupported = set(parameters) - {"temperature", "top_p", "seed"}
@@ -449,9 +459,10 @@ async def probe_model(config):
     try:
         headers = {}
         if config.api_key_env:
-            if not os.environ.get(config.api_key_env):
-                raise ValueError("Credential environment variable is unset")
-            headers["Authorization"] = "Bearer " + os.environ[config.api_key_env]
+            key = get_key(config.api_key_env)
+            if not key:
+                raise ValueError(missing_key_message(config.api_key_env))
+            headers["Authorization"] = "Bearer " + key
         path = "/api/tags" if config.adapter == "ollama" else "/models"
         async with http_client(timeout=5, trust_env=False) as client:
             result = await client.get(config.base_url + path, headers=headers)

@@ -257,9 +257,85 @@ def worker() -> None:
 
 
 @app.command()
+def hub(
+    port: Annotated[int, typer.Option(min=1024, max=65535)] = 8100,
+    host: Annotated[
+        str,
+        typer.Option(
+            help="Registry bind address; use TLS and deployment controls before public exposure."
+        ),
+    ] = "127.0.0.1",
+) -> None:
+    """Start only the shared agent registry; no private benchmark execution endpoints."""
+    import uvicorn
+
+    uvicorn.run("benchlab.hub:app_factory", factory=True, host=host, port=port)
+
+
+def _start_local_hub():
+    import os
+    import subprocess
+    import sys
+
+    import httpx
+
+    from benchlab.settings import Settings, environment_setting
+
+    if environment_setting("HUB_URL"):
+        return None
+    try:
+        with httpx.Client(timeout=0.5, trust_env=False) as client:
+            response = client.get("http://127.0.0.1:8100/v1/health")
+            if response.is_success and response.json().get("status") == "ok":
+                return None
+    except (httpx.HTTPError, ValueError):
+        pass
+    runtime_names = {
+        "PATH",
+        "SYSTEMROOT",
+        "WINDIR",
+        "PATHEXT",
+        "COMSPEC",
+        "TEMP",
+        "TMP",
+        "LANG",
+        "LC_ALL",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+    }
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if key.upper() in runtime_names or key.startswith("BENCH_AGENTS_HUB_")
+    }
+    env.setdefault("BENCH_AGENTS_HUB_DATA_DIR", str(Settings.from_env().data_dir / "hub"))
+    return subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "benchlab.hub:app_factory",
+            "--factory",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8100",
+            "--no-access-log",
+        ],
+        env=env,
+    )  # noqa: S603 - fixed local service argv
+
+
+@app.command()
 def ui(
     port: Annotated[int, typer.Option(min=1024, max=65535)] = 8000,
     api_only: Annotated[bool, typer.Option(help="Start only the FastAPI service.")] = False,
+    with_hub: Annotated[
+        bool,
+        typer.Option(
+            help="Start the default local agent registry when no external Hub URL is configured."
+        ),
+    ] = True,
     web_dir: Annotated[
         Path | None,
         typer.Option(help="Next.js source directory; defaults to apps/web in this checkout."),
@@ -273,6 +349,7 @@ def ui(
     import uvicorn
 
     web_process = None
+    hub_process = None
     if not api_only:
         web = (web_dir or Path(__file__).resolve().parents[2] / "apps" / "web").resolve()
         node = shutil.which("node")
@@ -301,21 +378,25 @@ def ui(
             "Dashboard: http://127.0.0.1:3000 · API: http://127.0.0.1:" + str(port), err=True
         )
     try:
+        if with_hub and not api_only:
+            hub_process = _start_local_hub()
         uvicorn.run("benchlab.api:app_factory", factory=True, host="127.0.0.1", port=port)
     finally:
-        if web_process:
+        for process in [web_process, hub_process]:
+            if process is None:
+                continue
             import psutil
 
             try:
-                for child in psutil.Process(web_process.pid).children(recursive=True):
+                for child in psutil.Process(process.pid).children(recursive=True):
                     try:
                         child.kill()
                     except psutil.Error:
                         pass
             except psutil.Error:
                 pass
-            web_process.terminate()
+            process.terminate()
             try:
-                web_process.wait(timeout=5)
+                process.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                web_process.kill()
+                process.kill()

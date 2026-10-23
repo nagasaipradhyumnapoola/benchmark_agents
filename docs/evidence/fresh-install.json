@@ -5,6 +5,8 @@
   "sdk_demo": "8/8 reference, 0/8 deliberate negative",
   "cli_shared_storage": "passed",
   "api_shared_storage": "passed",
+  "community_catalog_packaged": "passed",
+  "separate_hub_modules_packaged": "passed",
   "exports": [
     "json",
     "csv",

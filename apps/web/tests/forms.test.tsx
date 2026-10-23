@@ -247,6 +247,10 @@ describe("API-backed registration form", () => {
     expect(screen.getByRole("dialog")).toHaveAccessibleName(
       "Register model configuration",
     );
+    expect(screen.getByLabelText("Authentication")).toHaveValue("none");
+    fireEvent.change(screen.getByLabelText("Authentication"), {
+      target: { value: "environment" },
+    });
     expect(screen.getByLabelText(/API key environment variable/)).toBeVisible();
     expect(screen.getByLabelText(/^Endpoint base URL/)).toHaveValue(
       "http://127.0.0.1:1234/v1",

@@ -30,6 +30,11 @@ function LiveRun({ run }: { run: Run }) {
           <p className="muted text-xs mt-1">
             Trial {run.trial} · {run.id.slice(0, 8)}
           </p>
+          {run.system_id.startsWith("hub-") && run.status === "completed" ? (
+            <Link href={`/hub?run=${run.id}`} className="subtle-link text-xs">
+              Share this benchmark in Agent Hub →
+            </Link>
+          ) : null}
         </div>
         <Status value={run.status} />
       </div>

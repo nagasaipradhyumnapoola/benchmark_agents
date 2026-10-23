@@ -45,7 +45,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -180,7 +180,7 @@ small {
   padding: 8px 12px;
   margin: 2px 0;
   border-radius: 3px;
-  font-size: 13px;
+  font-size: 14px;
   color: #b8b9b1;
   transition: background 0.15s;
 }
@@ -1307,5 +1307,305 @@ td .demo-badge {
   }
   .footer-divider {
     padding-inline: 4px;
+  }
+}
+
+/* Source registry: distinct discovery, release and publishing surfaces. */
+.hub-account {
+  padding: 18px 0;
+  border-block: 1px solid var(--border);
+}
+.hub-account p {
+  font-size: 13px;
+}
+.hub-registry-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 12px;
+  padding-bottom: 4px;
+}
+.hub-registry-line > span > span {
+  margin-left: 12px;
+}
+.agent-hub > .page-heading {
+  margin-bottom: 6px;
+}
+.agent-hub .page-heading h1 {
+  font-size: 40px;
+  font-weight: 560;
+}
+.agent-hub .page-heading p {
+  font-size: 16px;
+  margin-top: 12px;
+}
+.hub-directory {
+  display: grid;
+  grid-template-columns: 235px minmax(0, 1fr);
+  gap: 38px;
+  margin-top: 12px;
+}
+.hub-filters {
+  padding-right: 28px;
+  border-right: 1px solid var(--border);
+  align-self: start;
+}
+.hub-filters > h2 {
+  margin-bottom: 4px;
+}
+.hub-filters .field > span {
+  font-size: 12px;
+}
+.hub-filters .field input {
+  font-size: 13px;
+}
+.hub-results {
+  min-width: 0;
+}
+.hub-results-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 0 20px;
+  border-bottom: 1px solid var(--border);
+}
+.hub-results-heading > span {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.hub-import-guide {
+  margin-top: 12px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+.hub-import-guide h3 {
+  font-size: 13px;
+}
+.hub-import-guide ol {
+  padding-left: 18px;
+  margin: 14px 0 20px;
+  color: #aaa9a2;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.hub-import-guide li + li {
+  margin-top: 10px;
+}
+.hub-import-guide a {
+  font-size: 12px;
+}
+.hub-agent-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 18px;
+  padding: 27px 0;
+  border-bottom: 1px solid var(--border);
+}
+.hub-agent-mark {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #242620;
+  border-radius: 10px;
+  color: #d2d5c5;
+}
+.hub-agent-owner {
+  font-size: 12px;
+  color: #aaa9a2;
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}
+.hub-agent-name {
+  font-size: 21px;
+  font-weight: 550;
+  letter-spacing: -0.02em;
+}
+.hub-agent-row p {
+  line-height: 1.7;
+}
+.hub-agent-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 18px;
+  font-size: 12px;
+  color: #c5c7ba;
+}
+.hub-agent-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hub-directory-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 44px 12px 42px 0;
+  gap: 22px;
+}
+.hub-directory-empty > svg {
+  color: #b6bba8;
+}
+.hub-directory-empty .empty {
+  padding: 0;
+}
+.hub-directory-empty .empty h3 {
+  font-size: 23px;
+  letter-spacing: -0.02em;
+}
+.hub-directory-empty .empty p {
+  margin-top: 12px;
+  max-width: 56ch;
+}
+.hub-directory-empty > p {
+  color: #aaa9a2;
+  max-width: 56ch;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.hub-directory-empty .subtle-link {
+  font-size: 12px;
+}
+.publish-section-heading {
+  margin-top: 20px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.publish-section-heading:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border: 0;
+}
+.publish-section-heading h3 {
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+.publish-section-heading p {
+  color: #aaa9a2;
+  font-size: 13px;
+  margin-top: 6px;
+  max-width: 70ch;
+}
+.hub-release-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-top: 14px;
+}
+.hub-release-heading > div:first-child {
+  flex: 1 1 380px;
+}
+.hub-release-heading h2 {
+  font-size: 30px;
+  font-weight: 550;
+  letter-spacing: -0.03em;
+}
+.hub-release-heading p {
+  max-width: 70ch;
+}
+.hub-owner {
+  font-size: 12px;
+  color: #b3b9a5;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.release-navigation {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  margin-top: 6px;
+}
+.release-navigation a {
+  padding: 12px 0 15px;
+  font-size: 13px;
+  color: #c4c7b8;
+}
+.release-navigation a:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+.release-navigation a > span {
+  margin-left: 5px;
+  color: #aaa9a2;
+  font-variant-numeric: tabular-nums;
+}
+[id^="agent-"] {
+  scroll-margin-top: 24px;
+}
+@media (max-width: 1100px) {
+  .hub-directory {
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 26px;
+  }
+  .hub-filters {
+    padding-right: 22px;
+  }
+}
+@media (max-width: 950px) {
+  .hub-directory {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hub-filters {
+    padding: 0 0 24px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .hub-filters > .stack {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hub-filters > .stack > label:first-child {
+    grid-column: 1 / -1;
+  }
+  .hub-import-guide {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .agent-hub .page-heading h1 {
+    font-size: 34px;
+  }
+  .agent-hub .page-heading p {
+    font-size: 15px;
+    max-width: 30ch;
+  }
+  .hub-agent-row {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .hub-agent-mark {
+    width: 30px;
+    height: 34px;
+    border-radius: 6px;
+  }
+  .hub-agent-mark svg {
+    width: 18px;
+  }
+  .hub-agent-name {
+    font-size: 19px;
+  }
+  .hub-directory-empty {
+    padding-block: 26px;
+  }
+  .hub-release-heading h2 {
+    font-size: 27px;
+  }
+  .release-navigation {
+    gap: 8px 20px;
+  }
+  .release-navigation a {
+    min-height: 44px;
+  }
+  .hub-registry-line > span > span {
+    display: block;
+    margin: 4px 0 0;
   }
 }

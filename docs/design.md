@@ -12,6 +12,8 @@ Sections are separated by horizontal rules. Avoid nested cards, icon-card grids,
 
 ## First-run behavior
 
+Agent Hub is the discovery and sharing surface. Place it in a Discover & share navigation group above private workspace tools. On desktop, give search/model/license filters a narrow left rail and agent releases a readable list with owner, source identity, version, license, model suggestions and actual download counts. Counts reflect registry data, never fabricated activity. At narrow widths, filters stack above results. Agent release pages expose usage, source, results and discussion through section links. Publishing groups details, source/runtime and model/discovery metadata. Keep import, trusted execution and result sharing as distinct explicit actions.
+
 A fresh workspace displays actual counts for registered models, agents and experiments, followed by the ordered connection workflow: register/probe a model, optionally pair an agent, then build and validate an experiment. Explain that saved settings and a successful connection are distinct states. The overview does not display fabricated metrics or invite automatic sample seeding. Experiment activity retains an intentional empty state until real jobs exist.
 
 The terminal handoff exposes `uv run bench-agents terminal` with setup documentation. The optional offline demonstration is an explicit action within documentation, and its evidence remains visibly labeled. Generic empty states do not launch demonstrations.

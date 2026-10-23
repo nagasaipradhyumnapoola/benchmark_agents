@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from urllib.parse import urlsplit
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
 
 SCHEMA_VERSION: Literal["1.0"] = "1.0"
 
@@ -43,6 +43,7 @@ class ModelConfig(Contract):
     adapter: str = Field(min_length=1, max_length=80)
     model: str = Field(min_length=1, max_length=200)
     base_url: str | None = None
+    connection_type: Literal["local", "hosted"] | None = None
     api_key_env: str | None = Field(default=None, pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")
     capabilities: list[str] = Field(default_factory=lambda: ["text"])
     context_window: int | None = Field(default=None, ge=1)
@@ -67,6 +68,18 @@ class ModelConfig(Contract):
         ):
             raise ValueError("Use an HTTP(S) base URL without credentials, query or fragment")
         return value.rstrip("/")
+
+
+SessionKey = Annotated[SecretStr, Field(min_length=1, max_length=8192)]
+
+
+class ModelConnection(Contract):
+    config: ModelConfig
+    api_key: SessionKey | None = Field(default=None, exclude=True)
+
+
+class ModelCredential(Contract):
+    api_key: SessionKey = Field(exclude=True)
 
 
 class AgentConfig(Contract):

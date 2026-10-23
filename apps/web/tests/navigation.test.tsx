@@ -2,7 +2,7 @@ import { it, expect, vi } from "vitest";
 import { render, screen, within, fireEvent } from "@testing-library/react";
 import { Workspace } from "@/components/workspace";
 vi.mock("next/navigation", () => ({ usePathname: () => "/compare" }));
-it("exposes all twelve destinations and identifies the active screen", () => {
+it("exposes all fourteen destinations and identifies the active screen", () => {
   render(
     <Workspace>
       <p>Evidence workspace</p>
@@ -10,11 +10,13 @@ it("exposes all twelve destinations and identifies the active screen", () => {
   );
   const nav = screen.getByRole("navigation", { name: "Main navigation" });
   const links = within(nav).getAllByRole("link");
-  expect(links).toHaveLength(12);
+  expect(links).toHaveLength(14);
   expect(
     within(nav).getByRole("link", { name: "Comparison studio" }),
   ).toHaveAttribute("aria-current", "page");
   expect(links.map((a) => a.getAttribute("href"))).toEqual([
+    "/hub",
+    "/community",
     "/",
     "/models",
     "/agents",

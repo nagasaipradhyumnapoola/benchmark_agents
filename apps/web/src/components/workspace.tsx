@@ -19,6 +19,7 @@ import {
   Settings2,
   SlidersHorizontal,
   TerminalSquare,
+  Users,
 } from "lucide-react";
 import {
   Sheet,
@@ -31,6 +32,13 @@ import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 const navigation: [string, [string, string, LucideIcon][]][] = [
   [
+    "Discover & share",
+    [
+      ["/hub", "Agent Hub", Boxes],
+      ["/community", "Community", Users],
+    ],
+  ],
+  [
     "Workspace",
     [
       ["/", "Overview", Activity],
@@ -40,7 +48,7 @@ const navigation: [string, [string, string, LucideIcon][]][] = [
     ],
   ],
   [
-    "Research",
+    "Benchmark & improve",
     [
       ["/experiments/new", "Experiment builder", FlaskConical],
       ["/experiments", "Live experiments", AudioLines],

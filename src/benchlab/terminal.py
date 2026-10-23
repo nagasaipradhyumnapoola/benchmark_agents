@@ -5,6 +5,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Literal
 
 import typer
 from click import IntRange
@@ -41,6 +42,23 @@ def choose(rows, label):
     return rows[number(f"Select {label}", 1, maximum=len(rows)) - 1]
 
 
+def choose_many(rows, label):
+    if not rows:
+        raise ValueError(f"No {label} available. Connect one first.")
+    for index, row in enumerate(rows, 1):
+        say(f"  {index}. {row['name']}  [{row['id']}]")
+    value = typer.prompt(f"Select {label} numbers separated by commas, or all", default="1").strip()
+    if value.lower() == "all":
+        return rows
+    try:
+        indices = list(dict.fromkeys(int(item.strip()) for item in value.split(",")))
+    except ValueError:
+        raise ValueError("Enter selection numbers separated by commas, or all") from None
+    if not indices or any(index < 1 or index > len(rows) for index in indices):
+        raise ValueError("Choose numbers from the displayed list")
+    return [rows[index - 1] for index in indices]
+
+
 def show_check(check):
     say("Compatibility: READY" if check.compatible else "Compatibility: BLOCKED")
     for reason in check.reasons:
@@ -50,9 +68,13 @@ def show_check(check):
 
 
 def connect_model(lab):
+    from benchlab.service import connect_model as save_connection
+
     name = typer.prompt("Model display name")
     say("  1. OpenAI-compatible chat endpoint\n  2. Ollama")
     adapter = "openai-compatible" if number("Adapter", 1, maximum=2) == 1 else "ollama"
+    say("  1. Local server\n  2. Hosted API")
+    connection: Literal["local", "hosted"] = "local" if number("Connection type", 1, maximum=2) == 1 else "hosted"
     base = typer.prompt(
         "Endpoint base URL",
         default="http://127.0.0.1:1234/v1"
@@ -60,11 +82,26 @@ def connect_model(lab):
         else "http://127.0.0.1:11434",
     )
     identity = typer.prompt("Exact provider model ID")
-    credential = environment_name("API key environment variable name (blank for no authentication)")
+    say("  1. No API key\n  2. Environment variable reference\n  3. Enter a key for this session")
+    auth = number("Authentication", 1 if connection == "local" else 3, maximum=3)
+    credential = environment_name("API key environment variable name") if auth == 2 else None
     model = ModelConfig(
-        name=name, adapter=adapter, model=identity, base_url=base, api_key_env=credential
+        name=name,
+        adapter=adapter,
+        model=identity,
+        base_url=base,
+        api_key_env=credential,
+        connection_type=connection,
     )
-    lab.store.save_model(model)
+    key = (
+        typer.prompt("API key (hidden; kept only in this terminal session)", hide_input=True)
+        if auth == 3
+        else None
+    )
+    saved = save_connection(lab.store, model, key)
+    model = ModelConfig(**saved["config"])
+    if key:
+        say("Key held in session memory only. Re-enter after restarting this process.")
     say(f"Saved model {model.id}. Probing discovery; no generation request.")
     show_check(asyncio.run(probe_model(model)))
 
@@ -129,14 +166,56 @@ def describe_experiment(lab, experiment):
 
 
 def execute(lab, mode):
+    from benchlab.credentials import get_key, remember_key
+
     models = [row for row in lab.store.list_models() if not row["demo"]]
     agents = [row for row in lab.store.list_agents() if not row["demo"]]
-    model = choose(models, "model") if mode != "native" else None
-    agent = choose(agents, "agent") if mode != "model" else None
-    if mode == "agent" and agent is not None and agent["config"]["adapter"] != "subprocess":
+    if mode in {"agent", "matrix"}:
+        agents = [
+            row
+            for row in agents
+            if not row["config"]["native"] and row["config"]["adapter"] == "subprocess"
+        ]
+    elif mode == "native":
+        agents = [
+            row
+            for row in agents
+            if row["config"]["native"] or row["config"]["adapter"] in {"codex-cli", "opencode-cli"}
+        ]
+    selected_models = (
+        []
+        if mode == "native"
+        else ([choose(models, "model")] if mode == "agent" else choose_many(models, "models"))
+    )
+    selected_agents = [] if mode == "model" else choose_many(agents, "agents")
+    if mode in {"agent", "matrix"}:
+        systems = [
+            SystemSpec(model_id=model["id"], agent_id=agent["id"])
+            for model in selected_models
+            for agent in selected_agents
+        ]
+    elif mode == "model":
+        systems = [SystemSpec(model_id=model["id"]) for model in selected_models]
+    else:
+        systems = [SystemSpec(agent_id=agent["id"]) for agent in selected_agents]
+    if len(systems) > 16:
         raise ValueError(
-            "Selected native product cannot bind a controlled model endpoint; choose Test native agent"
+            f"Selected {len(systems)} systems; choose at most 16 combinations per experiment"
         )
+    if mode == "matrix":
+        say(f"{len(systems)} model-agent combinations selected:")
+        for model in selected_models:
+            for agent in selected_agents:
+                say(f"  {agent['name']} + {model['name']}")
+    for row in selected_models:
+        reference = row["config"].get("api_key_env")
+        if reference and reference.startswith("BENCH_AGENTS_SESSION_") and not get_key(reference):
+            if not typer.confirm(
+                f"Session key unavailable for {row['name']}. Enter it now?", default=False
+            ):
+                say("Run not launched. Re-enter the key in this process before testing.")
+                return
+            remember_key(typer.prompt("API key (hidden; session only)", hide_input=True), reference)
     say("  1. Single reasoning task smoke\n  2. All eight default public text tasks")
     task_ids = ["reasoning-inventory"] if number("Task set", 1, maximum=2) == 1 else []
     trials, tokens, timeout, budget = 1, 512, 30, 300
@@ -146,7 +225,10 @@ def execute(lab, mode):
         timeout = number("Per-task timeout in seconds", 30, maximum=3600)
         budget = number("Whole experiment budget in seconds", 300, maximum=86400)
     host = False
-    if agent:
+    say(
+        f"{len(systems)} systems × {len(task_ids) if task_ids else 8} tasks × {trials} trials = {len(systems) * (len(task_ids) if task_ids else 8) * trials} task checks. Systems execute sequentially within the total budget."
+    )
+    if selected_agents:
         if environment_setting("ALLOW_HOST_PROCESS") != "1":
             raise ValueError(
                 "Host agents are disabled. Set BENCH_AGENTS_ALLOW_HOST_PROCESS=1 in your shell, restart terminal mode, and explicitly authorize the run."
@@ -157,16 +239,10 @@ def execute(lab, mode):
         if not host:
             say("Run not launched.")
             return
-    system = SystemSpec(
-        model_id=model["id"] if model else None, agent_id=agent["id"] if agent else None
-    )
-    selected = agent or model
-    if selected is None:
-        raise ValueError("Select a model or agent before running an experiment")
     config = ExperimentConfig(
-        name=f"Terminal test: {selected['name']}",
+        name=f"Terminal {mode} test: {len(systems)} systems",
         mode=mode,
-        systems=[system],
+        systems=systems,
         task_ids=task_ids,
         trials=trials,
         max_tokens=tokens,
@@ -235,11 +311,12 @@ def run_terminal(lab):
         5: lambda lab: execute(lab, "native"),
         6: inspect_results,
         7: compare_results,
+        8: lambda lab: execute(lab, "matrix"),
     }
     while True:
         try:
             render_menu(console, lab)
-            choice = number("Action", 0, minimum=0, maximum=7)
+            choice = number("Action", 0, minimum=0, maximum=8)
             if choice == 0:
                 return
             try:

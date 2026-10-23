@@ -3,6 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { spawn, ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 
 let experiment: string;
 let runIds: string[] = [];
@@ -10,6 +11,20 @@ const api = 'http://127.0.0.1:8000/api';
 const python = process.env.BENCH_AGENTS_TEST_PYTHON || (process.platform === 'win32' ? resolve('.venv/Scripts/python.exe') : resolve('.venv/bin/python'));
 let provider: ChildProcess;
 let providerUrl = '';
+let keyedProvider: ChildProcess;
+let keyedProviderUrl = '';
+
+async function startProvider(authenticated = false): Promise<[ChildProcess, string]> {
+  const child = spawn(python, ['tests/fixtures/browser_provider.py', ...(authenticated ? ['--authenticated'] : [])], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const url = await new Promise<string>((accept, reject) => {
+    const timer = setTimeout(() => { child.kill(); reject(new Error('Local browser HTTP fixture did not start')); }, 10000);
+    child.once('error', error => { clearTimeout(timer); reject(error); });
+    child.once('exit', code => { clearTimeout(timer); reject(new Error(`HTTP fixture exited ${code}`)); });
+    const lines = createInterface({ input: child.stdout! });
+    lines.once('line', line => { clearTimeout(timer); lines.close(); accept(JSON.parse(line).base_url); });
+  });
+  return [child, url];
+}
 
 async function finished(request: APIRequestContext, id: string) {
   await expect.poll(async () => (await (await request.get(`${api}/experiments/${id}`)).json()).status, { timeout: 20000 }).not.toMatch(/queued|running/);
@@ -19,20 +34,10 @@ async function finished(request: APIRequestContext, id: string) {
 test.describe('Real backend research workflow', () => {
   test.describe.configure({ mode: 'serial' });
   test.beforeAll(async () => {
-    provider = spawn(python, ['tests/fixtures/browser_provider.py'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    providerUrl = await new Promise<string>((accept, reject) => {
-      const timer = setTimeout(() => reject(new Error('Local browser HTTP fixture did not start')), 10000);
-      provider.once('error', reject);
-      provider.once('exit', code => reject(new Error(`HTTP fixture exited ${code}`)));
-      const lines = createInterface({ input: provider.stdout! });
-      lines.once('line', line => {
-        clearTimeout(timer);
-        lines.close();
-        accept(JSON.parse(line).base_url);
-      });
-    });
+    [provider, providerUrl] = await startProvider();
+    [keyedProvider, keyedProviderUrl] = await startProvider(true);
   });
-  test.afterAll(() => provider?.kill());
+  test.afterAll(() => { provider?.kill(); keyedProvider?.kill(); });
   test('fresh workspace starts empty with understandable next steps', async ({ page, request }) => {
     expect(await (await request.get(`${api}/models`)).json()).toEqual([]);
     expect(await (await request.get(`${api}/agents`)).json()).toEqual([]);
@@ -83,10 +88,11 @@ test.describe('Real backend research workflow', () => {
     await dialog.getByLabel('Display name', { exact: true }).fill('Browser protocol fixture');
     await dialog.getByLabel('Provider model identifier').fill('fixture-model');
     await dialog.getByLabel('Endpoint base URL').fill('http://127.0.0.1:65530/v1');
+    await dialog.getByLabel('Authentication', { exact: true }).selectOption('environment');
     await dialog.getByLabel('API key environment variable').fill('sk-invalid-key');
     await dialog.getByRole('button', { name: 'Register configuration' }).click();
     await expect(dialog.getByText('Use an environment variable name, never a secret value.')).toBeVisible();
-    await dialog.getByLabel('API key environment variable').fill('');
+    await dialog.getByLabel('Authentication', { exact: true }).selectOption('none');
     await dialog.getByRole('button', { name: 'Register configuration' }).click();
     await expect(dialog).not.toBeVisible();
     await expect(page.getByText('Browser protocol fixture', { exact: true }).first()).toBeVisible();
@@ -160,6 +166,160 @@ test.describe('Real backend research workflow', () => {
     await dialog.getByRole('button', { name: 'Register configuration' }).click();
     await expect(dialog).not.toBeVisible();
     await expect(page.getByText('Browser demo agent', { exact: true }).first()).toBeVisible();
+  });
+
+  test('a user benchmarks two agents against local and API-key model connections', async ({ page, request }) => {
+    await page.goto('/models');
+    await page.getByRole('button', { name: /Register model/ }).click();
+    let dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Display name', { exact: true }).fill('Browser API key integration fixture');
+    await dialog.getByLabel('Connection type', { exact: true }).selectOption('hosted');
+    await dialog.getByLabel('Provider model identifier').fill('browser-key-model');
+    await dialog.getByLabel('Endpoint base URL').fill(keyedProviderUrl);
+    await dialog.getByLabel(/^Session API key/).fill('browser-session-fixture-key');
+    await dialog.getByRole('button', { name: 'Register configuration' }).click();
+    await expect(dialog).not.toBeVisible();
+    await page.getByRole('button', { name: 'Probe compatibility' }).click();
+    await expect(page.getByText('Compatibility confirmed', { exact: true })).toBeVisible();
+    await page.getByLabel(/^Re-enter session API key/).fill('browser-session-fixture-key');
+    await page.getByRole('button', { name: 'Update session key', exact: true }).click();
+    await expect(page.getByLabel(/^Re-enter session API key/)).toHaveValue('');
+    const models = await (await request.get(`${api}/models`)).json();
+    const keyed = models.find((row: any) => row.config.name === 'Browser API key integration fixture');
+    expect(keyed.config.connection_type).toBe('hosted');
+    expect(JSON.stringify(models)).not.toContain('browser-session-fixture-key');
+    await page.goto('/agents');
+    await page.getByRole('button', { name: /Register agent/ }).click();
+    dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Display name', { exact: true }).fill('Browser second subprocess fixture');
+    await dialog.getByLabel(/^Executable/).fill(python);
+    await dialog.getByLabel(/^Script path \(optional\)/).fill(resolve('examples/adapters/minimal_chat_agent.py'));
+    await dialog.getByLabel(/^Model flag/).fill('--model');
+    await dialog.getByLabel(/^Model endpoint environment variable/).fill('HARNESS_BASE_URL');
+    await dialog.getByLabel(/^Model API key environment variable/).fill('HARNESS_API_KEY');
+    await dialog.getByRole('button', { name: 'Register configuration' }).click();
+    await expect(dialog).not.toBeVisible();
+    await page.goto('/experiments/new');
+    await page.getByLabel('Experiment name', { exact: true }).fill('Browser two-by-two matrix');
+    await page.getByRole('combobox', { name: /^Evaluation mode/ }).selectOption('matrix');
+    for (const name of ['Browser HTTP integration fixture', 'Browser API key integration fixture', 'Browser subprocess HTTP fixture', 'Browser second subprocess fixture']) {
+      await page.getByRole('checkbox', { name: new RegExp(`^${name}`) }).check();
+    }
+    await page.getByRole('button', { name: 'Use one quick text task' }).click();
+    await expect(page.getByText('4 task checks', { exact: true })).toBeVisible();
+    await page.getByLabel('Authorize host agent processes for this experiment', { exact: false }).check();
+    await page.getByRole('button', { name: 'Validate compatibility' }).click();
+    await expect(page.getByRole('button', { name: 'Launch experiment', exact: true })).toBeEnabled();
+    await page.getByRole('button', { name: 'Launch experiment', exact: true }).click();
+    await expect(page).toHaveURL(/experiments\?id=/);
+    const detail = await finished(request, new URL(page.url()).searchParams.get('id')!);
+    expect(detail.status).toBe('completed');
+    expect(detail.runs).toHaveLength(4);
+    expect(new Set(detail.config.systems.map((pair: any) => `${pair.model_id}:${pair.agent_id}`)).size).toBe(4);
+    const runs = await Promise.all(detail.runs.map(async (run: any) => (await request.get(`${api}/runs/${run.id}`)).json()));
+    expect(runs.every(run => run.results.length === 1 && run.results[0].passed)).toBe(true);
+    expect(JSON.stringify(runs)).not.toContain('browser-session-fixture-key');
+    expect((await (await request.get(keyedProviderUrl.replace('/v1', '/stats'))).json()).requests).toBe(2);
+    await page.screenshot({ path: 'docs/evidence/matrix-results-desktop.png', fullPage: true });
+    await page.goto(`/compare?runs=${detail.runs.map((run: any) => run.id).join(',')}`);
+    await expect(page.getByText('Matched experimental conditions', { exact: true })).toBeVisible();
+  });
+
+  test('community suggestions stay local until reviewed for manual GitHub submission', async ({ page, request }) => {
+    await page.goto('/community');
+    await expect(page.getByRole('heading', { name: 'Community', exact: true })).toBeVisible();
+    await page.getByRole('combobox', { name: /^Suggestion type/ }).selectOption('agent');
+    await page.getByLabel('Title', { exact: true }).fill('Browser community integration fixture');
+    await page.getByLabel('Description', { exact: true }).fill('Protocol fixture for testing contribution review, not a published capability claim.');
+    await page.getByLabel('Public source URL', { exact: true }).fill('https://github.com/nagasaipradhyumnapoola/benchmark_agents');
+    await page.getByLabel('License', { exact: true }).fill('Apache-2.0');
+    await page.getByLabel('Suggested models (one exact model name per line)', { exact: true }).fill('browser-wire-model\nbrowser-key-model');
+    await page.getByRole('button', { name: 'Save local draft', exact: true }).click();
+    await expect(page.getByText('Browser community integration fixture', { exact: true })).toBeVisible();
+    await expect(page.getByText('Local draft · unverified', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open GitHub to submit yourself', exact: true })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Review GitHub submission', exact: true }).click();
+    const link = page.getByRole('link', { name: 'Open GitHub to submit yourself', exact: true });
+    const share = new URL((await link.getAttribute('href'))!);
+    expect(share.hostname).toBe('github.com');
+    expect(share.searchParams.get('body')).toContain('browser-key-model');
+    expect(share.searchParams.get('body')).not.toContain('browser-session-fixture-key');
+    const download = page.waitForEvent('download');
+    await page.getByRole('link', { name: 'Download contribution JSON', exact: true }).click();
+    expect((await download).suggestedFilename()).toMatch(/\.json$/);
+    const catalog = await (await request.get(`${api}/community`)).json();
+    expect(catalog.published).toEqual([]);
+    expect(catalog.drafts).toHaveLength(1);
+    await page.screenshot({ path: 'docs/evidence/community-desktop.png', fullPage: true });
+  });
+
+  test('developer publishes source, imports it, benchmarks it and shares a versioned result', async ({ page, request }) => {
+    test.setTimeout(90000);
+    await page.goto('/hub');
+    await expect(page.getByRole('heading', { name: 'Agent Hub', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await page.getByLabel('Username', { exact: true }).fill('hub-browser-author');
+    await page.getByLabel('Password', { exact: true }).fill('local-hub-fixture-password-2026');
+    await page.getByRole('button', { name: 'Register account', exact: true }).click();
+    await expect(page.getByText('Signed in as hub-browser-author', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Publish an agent', exact: true }).click();
+    await page.getByLabel('Agent name', { exact: true }).fill('Browser published harness');
+    await page.getByLabel('Slug', { exact: true }).fill('browser-published-harness');
+    await page.getByLabel('Version', { exact: true }).fill('1.0.0');
+    await page.getByLabel('Summary', { exact: true }).fill('Protocol test release, not an agent capability claim.');
+    await page.getByLabel('README', { exact: true }).fill('A public stdin/stdout wrapper used only to verify publish, source import and model binding. Requires a configured OpenAI-compatible endpoint.');
+    await page.getByLabel('License', { exact: true }).fill('Apache-2.0');
+    await page.getByLabel('Entrypoint', { exact: true }).fill('agent.py');
+    await page.getByLabel('Source file path', { exact: true }).fill('agent.py');
+    await page.getByLabel('Source code', { exact: true }).fill(readFileSync('examples/adapters/minimal_chat_agent.py', 'utf8'));
+    await page.getByLabel(/^Recommended models/).fill('browser-wire-model');
+    await page.getByText('Model bindings, arguments and dependencies', { exact: true }).click();
+    await page.getByLabel('Model flag (optional)', { exact: true }).fill('--model');
+    await page.getByLabel('Model base URL environment variable (optional)', { exact: true }).fill('HARNESS_BASE_URL');
+    await page.getByLabel('Model API key environment variable (optional)', { exact: true }).fill('HARNESS_API_KEY');
+    await page.getByRole('button', { name: 'Publish release', exact: true }).click();
+    await expect(page).toHaveURL(/agent=browser-published-harness/);
+    await expect(page.getByRole('button', { name: 'Import agent', exact: true })).toBeVisible();
+    const importedResponse = page.waitForResponse(response => response.url().endsWith('/api/hub/import') && response.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Import agent', exact: true }).click();
+    const imported = await (await importedResponse).json();
+    expect(imported.agent.config.adapter).toBe('subprocess');
+    expect(imported.source.version).toBe('1.0.0');
+    expect(await (await request.get(`${api}/experiments`)).json()).not.toContainEqual(expect.objectContaining({ name: 'Hub imported execution' }));
+    await page.screenshot({ path: 'docs/evidence/agent-hub-release-desktop.png', fullPage: true });
+    await page.getByRole('link', { name: 'Benchmark imported agent', exact: true }).click();
+    await page.getByLabel('Experiment name', { exact: true }).fill('Hub imported execution');
+    const models = await (await request.get(`${api}/models`)).json();
+    const model = models.find((row: any) => row.config.name === 'Browser HTTP integration fixture');
+    await page.getByLabel('Shared model for agent evaluation').selectOption(model.id);
+    await page.getByRole('button', { name: 'Use one quick text task' }).click();
+    await page.getByLabel('Authorize host agent processes for this experiment', { exact: false }).check();
+    await page.getByRole('button', { name: 'Validate compatibility' }).click();
+    await expect(page.getByRole('button', { name: 'Launch experiment', exact: true })).toBeEnabled();
+    await page.getByRole('button', { name: 'Launch experiment', exact: true }).click();
+    await expect(page).toHaveURL(/experiments\?id=/);
+    const experimentId = new URL(page.url()).searchParams.get('id')!;
+    const detail = await finished(request, experimentId);
+    expect(detail.status).toBe('completed');
+    const runId = detail.runs[0].id;
+    const run = await (await request.get(`${api}/runs/${runId}`)).json();
+    expect(run.results[0].passed).toBe(true);
+    await page.getByRole('link', { name: /Share this benchmark in Agent Hub/ }).click();
+    await expect(page.getByRole('button', { name: 'Share this benchmark result', exact: true })).toBeVisible();
+    const sharedResponse = page.waitForResponse(response => response.url().endsWith('/api/hub/share-run') && response.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Share this benchmark result', exact: true }).click();
+    expect((await sharedResponse).status()).toBe(200);
+    await expect(page.getByRole('button', { name: 'Benchmark result shared', exact: true })).toBeVisible();
+    const reports = await (await request.get(`${api}/hub/agents/browser-published-harness/versions/1.0.0/reports`)).json();
+    expect(reports.items).toHaveLength(1);
+    expect(reports.items[0]).toMatchObject({ passed: 1, total: 1, model: 'browser-wire-model', self_reported: true });
+    expect(JSON.stringify(reports)).not.toContain('browser-session-fixture-key');
+    await page.screenshot({ path: 'docs/evidence/agent-hub-result-desktop.png', fullPage: true });
+    await page.goto('/hub');
+    await expect(page.getByRole('link', { name: 'Browser published harness', exact: true })).toBeVisible();
+    await page.screenshot({ path: 'docs/evidence/agent-hub-directory-desktop.png', fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: 'docs/evidence/agent-hub-directory-mobile.png', fullPage: true });
   });
 
   test('benchmark library filters public tasks and exposes requirements', async ({ page }) => {
@@ -263,9 +423,9 @@ test.describe('Real backend research workflow', () => {
     await expect(page.getByText('Resource not found', { exact: true })).toBeVisible();
   });
 
-  test('all twelve routes render at 1440/1024/768/390 without viewport overflow', async ({ page }) => {
+  test('all fourteen routes render at 1440/1024/768/390 without viewport overflow', async ({ page }) => {
     test.setTimeout(180000);
-    const routes = ['/', '/models', '/agents', '/benchmarks', '/experiments/new', '/experiments', '/compare', '/replay', '/optimize', '/reports', '/settings', '/docs'];
+    const routes = ['/', '/models', '/agents', '/benchmarks', '/community', '/hub', '/experiments/new', '/experiments', '/compare', '/replay', '/optimize', '/reports', '/settings', '/docs'];
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     for (const width of [1440, 1024, 768, 390]) {
@@ -293,7 +453,7 @@ test.describe('Real backend research workflow', () => {
 
   test('keyboard access and axe WCAG scan on the overview, builder and replay', async ({ page }) => {
     test.setTimeout(90000);
-    for (const path of ['/', '/experiments/new', `/replay?run=${runIds[0]}`]) {
+    for (const path of ['/', '/experiments/new', '/community', '/hub', '/hub?agent=browser-published-harness&version=1.0.0', `/replay?run=${runIds[0]}`]) {
       await page.goto(path);
       await expect(page.locator('main h1')).toBeVisible();
       await page.getByRole('link', { name: 'Skip to content' }).focus();

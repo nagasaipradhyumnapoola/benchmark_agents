@@ -77,11 +77,12 @@ def render_menu(console, lab):
     actions = [
         ("1", "Connect a model", "Existing Ollama or chat API endpoint"),
         ("2", "Connect an agent", "A custom harness or native CLI product"),
-        ("3", "Test a model", "Run an independently verified check"),
-        ("4", "Test model + agent", "Bind one endpoint to a custom harness"),
+        ("3", "Test models", "Compare one or several registered endpoints"),
+        ("4", "Test model + agents", "One endpoint with selected custom harnesses"),
         ("5", "Test native agent", "Use the product's own configuration"),
         ("6", "Inspect/export results", "Failures, verified scores, and ZIP evidence"),
         ("7", "Compare saved runs", "Check conditions before comparing outcomes"),
+        ("8", "Test multiple models + agents", "Preview and benchmark every selected pair"),
         ("0", "Exit", "Keep your saved connections and results"),
     ]
     for number, action, detail in actions:

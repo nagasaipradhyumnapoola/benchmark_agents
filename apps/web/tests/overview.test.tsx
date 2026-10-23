@@ -39,10 +39,9 @@ it("guides an empty workspace through real setup without synthetic results or a 
     "href",
     "/models",
   );
-  expect(screen.getByRole("link", { name: "Register agent" })).toHaveAttribute(
-    "href",
-    "/agents",
-  );
+  expect(
+    screen.getByRole("link", { name: "Explore Agent Hub" }),
+  ).toHaveAttribute("href", "/hub");
   expect(
     screen.getByRole("link", { name: "Build experiment" }),
   ).toHaveAttribute("href", "/experiments/new");

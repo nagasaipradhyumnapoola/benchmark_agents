@@ -29,7 +29,7 @@ class Engine:
         self._active = {}
 
     def _resolve(self, system):
-        return (
+        resolved = (
             ModelConfig(**self.store.get_model(system.model_id)["config"])
             if system.model_id
             else None,
@@ -37,6 +37,11 @@ class Engine:
             if system.agent_id
             else None,
         )
+        if resolved[1]:
+            from .imports import verify_import
+
+            verify_import(self.store, resolved[1])
+        return resolved
 
     async def validate(self, config):
         from .adapters.registry import (
@@ -50,6 +55,12 @@ class Engine:
 
         reasons = []
         warnings = []
+        if config.mode == "matrix":
+            pairs = [(system.model_id, system.agent_id) for system in config.systems]
+            if len(set(pairs)) != len(pairs):
+                reasons.append(
+                    "Matrix systems must contain unique model-agent pairs; duplicate pair selected"
+                )
         if not environment_available(config.workspace_provider):
             reasons.append("Workspace environment provider is not registered")
         try:
@@ -64,6 +75,9 @@ class Engine:
                 model, agent = self._resolve(system)
             except KeyError as exc:
                 reasons.append(f"Unknown system: {exc}")
+                continue
+            except ValueError as exc:
+                reasons.append(str(exc))
                 continue
             if model:
                 models.add(model.id)

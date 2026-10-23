@@ -9,7 +9,30 @@ from pathlib import Path
 from typing import Any
 
 from benchlab import __version__
+from benchlab.credentials import SESSION_PREFIX, forget_key, remember_key
 from benchlab.schemas import AgentConfig, ExperimentConfig, ModelConfig, SystemSpec
+
+
+def connect_model(store, model: ModelConfig, api_key: str | None = None):
+    """Save an endpoint with a write-only process credential, shared by HTTP and terminal."""
+    previous = next((row for row in store.list_models() if row["id"] == model.id), None)
+    reference = None
+    if model.api_key_env and model.api_key_env.startswith(SESSION_PREFIX):
+        if not previous or previous["config"].get("api_key_env") != model.api_key_env:
+            raise ValueError("Session credential references are generated for each connected model")
+    if api_key is not None:
+        if model.api_key_env:
+            raise ValueError("Choose either an environment reference or an entered session API key")
+        reference = remember_key(api_key)
+        model = model.model_copy(update={"api_key_env": reference})
+    try:
+        row = store.save_model(model)
+    except Exception:
+        forget_key(reference)
+        raise
+    if previous and previous["config"].get("api_key_env") != model.api_key_env:
+        forget_key(previous["config"].get("api_key_env"))
+    return row
 
 
 def install_demo_inventory(store, *, include_agents=False):

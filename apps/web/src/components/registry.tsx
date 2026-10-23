@@ -36,6 +36,7 @@ export const modelDefaults: ModelConfig = {
   model: "",
   base_url: "http://127.0.0.1:1234/v1",
   api_key_env: null,
+  connection_type: "local",
   capabilities: ["text"],
   demo: false,
   description: "",
@@ -93,9 +94,16 @@ function RegistrationForm({
   const [script, setScript] = useState("");
   const [argumentsJson, setArgumentsJson] = useState("[]");
   const [error, setError] = useState<string | null>(null);
+  const [authentication, setAuthentication] = useState<
+    "none" | "session" | "environment"
+  >("none");
+  const [apiKey, setApiKey] = useState("");
   const action = useAction<Registration<ModelConfig | AgentConfig>>(
-    `/${kind}`,
-    (row) => done(row.id),
+    kind === "models" ? "/models/connect" : "/agents",
+    (row) => {
+      setApiKey("");
+      done(row.id);
+    },
   );
   function update(key: string, value: unknown) {
     setConfig((c) => ({ ...c, [key]: value }));
@@ -126,13 +134,47 @@ function RegistrationForm({
         };
       }
       const merged = { ...prepared, ...overrides };
+      if (kind === "models") {
+        if (authentication !== "environment")
+          (merged as ModelConfig).api_key_env = null;
+        if (
+          authentication === "session" &&
+          (!apiKey.trim() || apiKey.length > 8192)
+        ) {
+          setError("Enter a session API key of 1–8192 characters.");
+          return;
+        }
+        if (
+          authentication === "environment" &&
+          !(merged as ModelConfig).api_key_env
+        ) {
+          setError("Enter the API key environment variable name.");
+          return;
+        }
+        if (
+          (merged as ModelConfig).connection_type === "hosted" &&
+          merged.adapter !== "openai-compatible"
+        ) {
+          setError(
+            "Hosted APIs require the OpenAI-compatible endpoint adapter.",
+          );
+          return;
+        }
+      }
       const message = validateRegistration(merged);
       if (message) {
         setError(message);
         return;
       }
       setError(null);
-      action.mutate(merged);
+      action.mutate(
+        kind === "models"
+          ? {
+              config: merged,
+              ...(authentication === "session" ? { api_key: apiKey } : {}),
+            }
+          : merged,
+      );
     } catch {
       setError(
         "Advanced configuration must be a JSON object and arguments must be a JSON array.",
@@ -147,6 +189,38 @@ function RegistrationForm({
           : "Connect a custom subprocess harness or an installed CLI product. Saving a configuration does not execute it."}
       </p>
       <div className="form-grid">
+        {"model" in config ? (
+          <label className="field full">
+            <span>Connection type</span>
+            <select
+              aria-label="Connection type"
+              value={config.connection_type ?? "local"}
+              onChange={(e) => {
+                const connection_type = e.target.value as "local" | "hosted";
+                setConfig((current) => ({
+                  ...current,
+                  connection_type,
+                  adapter: "openai-compatible",
+                  base_url:
+                    connection_type === "hosted" ? "" : modelDefaults.base_url,
+                  api_key_env: null,
+                }));
+                setAuthentication(
+                  connection_type === "hosted" ? "session" : "none",
+                );
+                setApiKey("");
+              }}
+            >
+              <option value="local">Local server</option>
+              <option value="hosted">Hosted API</option>
+            </select>
+            <small>
+              Connect an existing server. Hosted providers must support the
+              OpenAI-compatible API; use the provider's exact endpoint and model
+              identifier.
+            </small>
+          </label>
+        ) : null}
         <label className="field">
           <span>Display name</span>
           <Input
@@ -182,7 +256,9 @@ function RegistrationForm({
             }}
           >
             {(kind === "models"
-              ? ["openai-compatible", "ollama", "demo"]
+              ? "model" in config && config.connection_type === "hosted"
+                ? ["openai-compatible"]
+                : ["openai-compatible", "ollama", "demo"]
               : ["subprocess", "codex-cli", "opencode-cli", "demo"]
             ).map((a) => (
               <option key={a} value={a}>
@@ -229,18 +305,62 @@ function RegistrationForm({
                 Native Ollama uses the server root.
               </small>
             </label>
-            <label className="field">
-              <span>API key environment variable</span>
-              <Input
-                placeholder="OPENAI_API_KEY"
-                value={config.api_key_env ?? ""}
-                onChange={(e) => update("api_key_env", e.target.value || null)}
-              />
+            <label className="field full">
+              <span>Authentication</span>
+              <select
+                aria-label="Authentication"
+                value={authentication}
+                onChange={(e) => {
+                  setAuthentication(e.target.value as typeof authentication);
+                  setApiKey("");
+                  update("api_key_env", null);
+                }}
+              >
+                <option value="none">No API key</option>
+                <option value="session">Enter API key for this session</option>
+                <option value="environment">
+                  Environment variable reference
+                </option>
+              </select>
               <small>
-                Optional for local servers. Enter a variable name, not the key.
-                Set its value in the backend environment.
+                Session keys stay only in memory in the running backend.
+                Re-enter the key after the backend restarts. The saved
+                configuration contains a reference, never the key.
               </small>
             </label>
+            {authentication === "session" ? (
+              <label className="field full">
+                <span>Session API key</span>
+                <Input
+                  type="password"
+                  required
+                  maxLength={8192}
+                  autoComplete="off"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                />
+                <small>
+                  Sent once to the backend and cleared after saving. Never saved
+                  in browser storage or configuration JSON.
+                </small>
+              </label>
+            ) : null}
+            {authentication === "environment" ? (
+              <label className="field">
+                <span>API key environment variable</span>
+                <Input
+                  placeholder="OPENAI_API_KEY"
+                  value={config.api_key_env ?? ""}
+                  onChange={(e) =>
+                    update("api_key_env", e.target.value || null)
+                  }
+                />
+                <small>
+                  Optional for local servers. Enter a variable name, not the
+                  key. Set its value in the backend environment.
+                </small>
+              </label>
+            ) : null}
             <label className="field">
               <span>Context window (tokens)</span>
               <Input
@@ -442,14 +562,63 @@ function Probe({
   kind,
   id,
   native = false,
+  sessionCredential = false,
 }: {
   kind: string;
   id: string;
   native?: boolean;
+  sessionCredential?: boolean;
 }) {
   const action = useAction<Compatibility>(`/${kind}/${id}/probe`);
+  const [apiKey, setApiKey] = useState("");
+  const credential = useAction<{ configured: boolean; scope: string }>(
+    `/models/${id}/credential`,
+    () => {
+      setApiKey("");
+      action.reset();
+    },
+  );
   return (
     <div>
+      {sessionCredential ? (
+        <form
+          className="stack mb-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            credential.mutate({ api_key: apiKey });
+          }}
+        >
+          <p className="registration-note">
+            This key is held only in memory in the running backend. Re-enter it
+            after the backend restarts, then probe compatibility again.
+          </p>
+          <label className="field">
+            <span>Re-enter session API key</span>
+            <Input
+              type="password"
+              required
+              maxLength={8192}
+              autoComplete="off"
+              value={apiKey}
+              onChange={(event) => setApiKey(event.target.value)}
+            />
+          </label>
+          <Button
+            type="submit"
+            variant="outline"
+            size="sm"
+            disabled={!apiKey.trim() || credential.isPending}
+          >
+            Update session key
+          </Button>
+          <ErrorState error={credential.error} />
+          {credential.isSuccess ? (
+            <p role="status" className="registration-note">
+              Session key updated. Probe compatibility to check the connection.
+            </p>
+          ) : null}
+        </form>
+      ) : null}
       <p className="registration-note mb-4">
         Configuration saved. Check compatibility before using it in an
         experiment.
@@ -548,7 +717,7 @@ export function Registry({ kind }: { kind: "models" | "agents" }) {
                 <DialogTitle>Register {singular} configuration</DialogTitle>
                 <DialogDescription>
                   New versions preserve historical identity. Credentials stay in
-                  environment variables.
+                  environment references or memory in the running backend.
                 </DialogDescription>
               </DialogHeader>
               <RegistrationForm
@@ -655,6 +824,13 @@ export function Registry({ kind }: { kind: "models" | "agents" }) {
                     kind={kind}
                     id={current.id}
                     native={"native" in current.config && current.config.native}
+                    sessionCredential={
+                      kind === "models" &&
+                      "api_key_env" in current.config &&
+                      !!current.config.api_key_env?.startsWith(
+                        "BENCH_AGENTS_SESSION_",
+                      )
+                    }
                   />
                 </div>
                 <details className="details-disclosure">

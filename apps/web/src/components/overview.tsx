@@ -50,13 +50,13 @@ function FirstExperiment({ data }: { data: OverviewData }) {
               <h3>
                 Pair an agent <span className="optional">Optional</span>
               </h3>
-              <p>Connect an execution harness for agent comparisons.</p>
+              <p>Import an agent from the Hub, or register your own harness.</p>
               {hasAgents ? (
                 <small>{data.agents.length} registered</small>
               ) : null}
             </div>
-            <Link href="/agents" className="setup-link">
-              {hasAgents ? "Manage agents" : "Register agent"}{" "}
+            <Link href={hasAgents ? "/agents" : "/hub"} className="setup-link">
+              {hasAgents ? "Manage agents" : "Explore Agent Hub"}{" "}
               <ArrowRight size={16} />
             </Link>
           </li>

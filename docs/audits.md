@@ -6,11 +6,11 @@ This is the integration audit for the actual implementation, superseding interme
 
 | Check | Actual result | Evidence / reproduction |
 | --- | --- | --- |
-| Python suite including optional Inspect | 88 passed, 4 skipped; three upstream deprecation warnings | `uv run pytest --cov=benchlab --cov-report=json:docs/evidence/coverage.json`; 83% statement coverage |
-| Static Python checks | Ruff and mypy pass | `uv run ruff check src tests examples scripts`; `uv run mypy src/benchlab` (22 source files) |
-| Frontend components/forms/navigation | 17 passed | `npm test --prefix apps/web` |
+| Python suite including optional Inspect | 231 passed, 4 skipped; three upstream deprecation warnings | `uv run pytest --cov=benchlab --cov-report=json:docs/evidence/coverage.json`; 86% statement coverage |
+| Static Python checks | Ruff and mypy pass | `uv run ruff check src tests examples scripts`; `uv run mypy src/benchlab` (29 source files) |
+| Frontend components/forms/navigation | 33 passed | `npm test --prefix apps/web` |
 | Frontend type/format/build | pass | `npm run typecheck --prefix apps/web`; `npm run format:check --prefix apps/web`; `npm run build --prefix apps/web` |
-| Browser integration | 18 passed, 0 failures/skips/flakes | [browser-results.json](evidence/browser-results.json); real API on 8000 and production web on 3000 |
+| Browser integration | 21 passed, 0 failures/skips/flakes | [browser-results.json](evidence/browser-results.json); real API on 8000 and production web on 3000 |
 | Full host-safe deterministic suite | Reference 9/9, deliberately flawed 0/9 | [full-offline.json](evidence/full-offline.json); `uv run python scripts/full_offline.py` |
 | Two independent provider HTTP endpoints | pass | `tests/test_http_integration.py`: actual loopback HTTP requests, model/seed/usage, independent verification, persisted comparison |
 | Controlled agent pair | pass | Same test file: two real Python subprocess harnesses call the selected loopback endpoint through explicit model/URL bindings |
@@ -62,6 +62,8 @@ The current refinement also verifies an empty default workspace ([empty-start.js
 
 ## Pass 2 — benchmark correctness
 
+The Agent Hub/matrix expansion adds 2×2 execution with independent endpoint credentials, session-key rotation/redaction, 48 Community cases, 55 standalone registry cases, cookie-proxy/import checks and source-integrity regressions. The real browser publishes a Python release, imports its pinned source, pairs it with a loopback HTTP endpoint, verifies its task and shares the derived version-specific result. Registry reports remain self-reported. The shared registry is self-hostable development software; no public hosted deployment, universal framework installer, moderator system or production-scale identity service is claimed.
+
 Deliberate negative fixtures fail through the same verifiers as successful fixtures. Full offline execution covers every host-safe task. Real loopback HTTP tests exercise two independent endpoints and two subprocess harnesses, provider IDs, prompt isolation, seed forwarding, usage accounting, persistence and comparisons. These are protocol fixtures, not real intelligence measurements.
 
 Regression checks cover fresh task workspaces, immutable model/config identities, repeated trials, retries/deadlines, unknown usage under caps, cancelled/interrupted state, concurrent execution ownership, recovery with live owners, independent file-state checks, zero-exit code false positives, report escaping/formula safety, incompatible conditions, ordered-budget starvation, category/recovery metrics, and extension cleanup. Manifest data includes task-definition SHA-256, runtime package versions, exact config/model/agent snapshots and fixed Docker verifier image identity when applicable. Source revision remains optional/unavailable unless supplied by packaging; upstream provider model aliases can still change and require user-managed revision pinning.
@@ -73,6 +75,8 @@ Fixed discovered issues: concurrent double execution; cross-engine cancellation;
 API Host/Origin checks and loopback defaults, environment-name credentials, best-effort ingestion/export redaction, symlink/path containment, artifact caps, escaped previews/HTML and CSV formula neutralization were inspected and negatively tested. Container contracts restrict privileges, resources and external network without mounting host paths. No Docker reset, user-data deletion, model download or paid dependency was introduced. Trusted native processes/plugins remain privileged; Docker is not an absolute boundary. Public tests are not secret or formally resistant to malicious Python introspection. Review `SECURITY.md` before evaluating untrusted code.
 
 ## Pass 4 — UI/UX
+
+The final refinement applies Impeccable to the established graphite system: Discover & share navigation, a directory with filter rail and source metadata, grouped publication fields, release section links and mobile stacking. Desktop and 390px directory captures were inspected. Browser tests now cover fourteen routes at four widths and axe scans on overview, builder, Community, Hub directory, populated release and replay. The mechanical detector returned no findings. These checks do not establish every accessibility criterion. In-app documentation includes publication/import/model setup and result-sharing instructions.
 
 Inspected actual desktop overview/comparison/replay and 390px loaded overview screenshots. An initial mobile screenshot captured loading skeletons; screenshot capture now waits for persisted experiment content. Internal scrolling preserves legible technical tables. Fixed keyboard focus for JSON/text evidence, preserved dark contrast and native text, and added real category comparisons. E2E covers first-run instructions, demo, model/agent forms, benchmark/builder, execution/cancel/failure, compare, replay tabs/filters, ablation, exports, persisted refresh, settings import, mobile sheet and error/empty states. Axe reports no violations in the three tested major workflows; it does not prove every accessibility criterion.
 

@@ -17,12 +17,15 @@ All interfaces use the same engine and persisted schema. Run `uv run bench-agent
 | `bench-agents report ID --format zip --out evidence.zip` | Export evidence; formats json/csv/html/zip |
 | `bench-agents cancel ID` | Persist cancellation observed by the active worker |
 | `bench-agents worker` | Process durable queue without browser; single daemon per workspace |
-| `bench-agents ui` | Launch API and web from source checkout |
+| `bench-agents ui` | Launch private API, web and a separate local Hub unless an external registry is configured |
+| `bench-agents hub` | Launch the separate source registry on loopback 8100 |
 | `bench-agents ui --api-only` | Start REST API only, including from an installed wheel |
 
 REST OpenAPI lives at `http://127.0.0.1:8000/docs` and `/openapi.json`. Main resources are `/api/models`, `/api/agents`, `/api/benchmarks`, `/api/experiments`, `/api/runs`, `/api/compare`, `/api/diagnostics`, `/api/settings` and `/api/metrics`. POST `/api/demo` queues a zero-credential experiment; POST `/api/experiments/validate` checks compatibility without launching. See the [shared contracts](contracts.md) for exact payloads and return shapes. IDs are opaque; list responses are arrays. Poll events by monotonic `after` sequence. Export endpoints are ordinary attachments.
 
 Python example:
+
+Agent Hub uses a separate `/v1` API documented in [Hub hosting and contracts](hub-server.md). The private Lab exposes the corresponding `/api/hub/*` proxy plus `/api/hub/import`, `/api/hub/runs/{id}/share` and `/api/hub/share-run`. Proxy account responses omit bearer tokens and set an HttpOnly cookie. Community suggestions use GET/POST `/api/community` and GET `/api/community/{id}/export`; they remain local drafts until a user submits them for review. Model session registration uses POST `/api/models/connect` with `{config, api_key?}`; POST `/api/models/{id}/credential` updates an existing session reference. Matrix experiments submit unique explicit model/agent pairs with `mode: matrix`, up to 16 systems.
 
 ```python
 import asyncio

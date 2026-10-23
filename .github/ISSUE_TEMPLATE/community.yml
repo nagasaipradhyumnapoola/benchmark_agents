@@ -1,0 +1,58 @@
+name: Community suggestion
+description: Suggest an open-source agent, exact model pairing, or benchmark.
+title: "[Community] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is a public suggestion, not an executable registration or a verified result.
+        Never include keys, bearer tokens, private endpoints, credential references or machine paths.
+        Accepted suggestions appear after a reviewed catalog pull request and an installation update.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Suggestion type
+      options:
+        - Open-source agent
+        - Agent and model pairing
+        - Benchmark
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Public source URL
+      description: Required for an agent. Public HTTPS only, without credentials, query or fragment.
+  - type: input
+    id: license
+    attributes:
+      label: License
+      description: Required for an agent; provide the license identifier or clear license name.
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Suggestion and rationale
+      description: Explain the intended task and why this would be useful.
+    validations:
+      required: true
+  - type: textarea
+    id: models
+    attributes:
+      label: Suggested exact model names
+      description: One exact provider/model identifier per line. Do not include endpoints or credentials.
+  - type: textarea
+    id: benchmarks
+    attributes:
+      label: Benchmark IDs
+      description: Optional benchmark IDs or a description of the benchmark to add.
+  - type: input
+    id: evidence
+    attributes:
+      label: Public evidence URL
+      description: Optional public HTTPS evidence. Suggestions remain unverified recommendations.
+  - type: textarea
+    id: contribution
+    attributes:
+      label: Reviewed contribution JSON
+      description: Optionally paste the metadata from the local Community draft export after reviewing it for private data.
+      render: json

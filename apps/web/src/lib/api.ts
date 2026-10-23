@@ -14,10 +14,7 @@ export async function request<T>(path: string, body?: unknown): Promise<T> {
     let message = `${response.status} ${response.statusText}`;
     try {
       const data = await response.json();
-      message =
-        typeof data.detail === "string"
-          ? data.detail
-          : JSON.stringify(data.detail ?? data);
+      if (typeof data.detail === "string") message = data.detail;
     } catch {}
     throw new Error(message);
   }
@@ -51,7 +48,16 @@ export function useAction<T = unknown>(
 ) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: unknown) => request<T>(path, body),
+    mutationFn: async (body: unknown) => {
+      try {
+        return await request<T>(path, body);
+      } finally {
+        // React Query retains mutation variables. Remove write-only credentials
+        // as soon as the request settles, including rejected requests.
+        if (body && typeof body === "object" && "api_key" in body)
+          delete (body as Record<string, unknown>).api_key;
+      }
+    },
     onSuccess: (data) => {
       void client.invalidateQueries();
       onSuccess?.(data);

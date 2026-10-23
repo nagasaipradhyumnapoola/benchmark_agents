@@ -1,8 +1,8 @@
 # Bench Agents
 
-Run local experiments on AI models and agent harnesses, verify their outputs, and inspect the evidence behind each result.
+Publish and discover open-source agents, import versioned source into your workspace, and benchmark agents against local models or hosted APIs.
 
-Bench Agents combines a browser dashboard, command-line interface, REST API, and Python SDK over the same SQLite workspace. Compare configured systems, investigate failures, test configuration changes, and export results without a hosted Bench Agents account.
+Bench Agents combines a shared Agent Hub with a private browser dashboard, guided terminal, REST API and Python SDK. The Hub stores published source and community contributions; your Lab stores model connections, credentials and execution evidence. You can run both locally or connect your Lab to a self-hosted shared registry.
 
 **Status: 0.1.0 development.** The offline workflow and local HTTP integration tests pass. Real-model generation, Docker execution, and credentialed native-agent runs still have verification gates. See [verification status](#verification-status).
 
@@ -30,11 +30,11 @@ uv run bench-agents terminal
 
 The terminal opens with a bold Bench Agents banner and a guided menu. Connect an existing model endpoint, optionally connect an agent harness, then test one task or the eight default text tasks. Inspect failures, compare saved runs and export a ZIP evidence report from the menu. Node.js is needed only for the website. No inference server or model weights are started automatically.
 
-For a small first test: **Connect a model → Test a model → single reasoning task → review compatibility → confirm run → Inspect/export results**. Enter the exact provider model ID and the name of a credential environment variable when required. A saved configuration is not yet a verified connection. See the [step-by-step testing guide](docs/testing.md) for both terminal and browser workflows.
+For a small first test: **Connect a model → Test models → single reasoning task → review compatibility → confirm run → Inspect/export results**. Choose a local server or hosted API, enter the exact provider model ID, and select no key, a session-only API key, or an environment-variable reference. Session keys stay in the running process and need re-entry after restart. A saved configuration is not yet a verified connection. See the [step-by-step testing guide](docs/testing.md) for both terminal and browser workflows.
 
 ### Start the dashboard
 
-Install and build the web application, then launch both services:
+Install and build the web application, then launch the dashboard, private API and local Agent Hub:
 
 ```shell
 npm ci --prefix apps/web
@@ -43,6 +43,18 @@ uv run bench-agents ui
 ```
 
 Open the [dashboard](http://127.0.0.1:3000) or [interactive API documentation](http://127.0.0.1:8000/docs). Stop a running web server before rebuilding its output directory.
+
+The launcher starts a separate registry at `http://127.0.0.1:8100` when no external Hub is configured. Open **Agent Hub** in the sidebar to browse or publish. Set `BENCH_AGENTS_HUB_URL=https://your-registry.example` in the Lab's environment to use a shared registry instead. [Registry hosting and deployment boundaries](docs/hub-server.md) explain how to run it separately. The private Lab API must remain behind a trusted access boundary.
+
+### Publish, import and test an agent
+
+1. Open **Agent Hub → Create account**. Accounts belong to the connected registry.
+2. Choose **Publish an agent**. Supply a name, unique slug, version, license, README and Python or Node.js source. Set the script entrypoint, model bindings and recommended exact model IDs. Published versions are immutable.
+3. Inspect a release's usage, source, dependencies and digest. Choose **Import agent** to stage that exact release and register it locally. Import does not execute code or install dependencies.
+4. Choose **Benchmark imported agent**, connect a local server or hosted API in **Model explorer**, then select the model and tasks. Review dependencies and trust the code before enabling host execution. Validate compatibility and launch.
+5. Inspect the task evidence and export a report. From a completed run, choose **Share this benchmark in Agent Hub**. The result is tied to the imported version and labeled **self-reported** because the shared registry did not independently execute it.
+
+The current portable release format supports Python/Node.js stdin/stdout harnesses. Arbitrary framework repositories may need a wrapper and separate dependency setup; a one-click import is not a universal environment installer. Registries start empty with no seeded agents, accounts or scores. This repository provides self-hostable software, not an already deployed public service. Internet-wide registration still requires operator moderation, quotas and account recovery; see the [hosting guide](docs/hub-server.md).
 
 At API port 8000, `bench-agents ui` uses the production build when available. Without a build, or with a custom API port, it starts the development server. Cold development compilation can be slow on machines with little available RAM. The web scripts disable Next.js telemetry.
 
@@ -72,7 +84,7 @@ Expected: reference **9/9**, deliberate negative **0/9**, and the Docker-only co
 
 ## Explore the workspace
 
-The twelve dashboard screens read persisted backend records. Refreshing the browser preserves experiment state.
+The fourteen dashboard screens read persisted backend records. Refreshing the browser preserves experiment state.
 
 | Screen | Route | Workflow |
 | --- | --- | --- |
@@ -80,6 +92,8 @@ The twelve dashboard screens read persisted backend records. Refreshing the brow
 | Model explorer | `/models` | Register endpoints, probe discovery, and inspect history |
 | Agent explorer | `/agents` | Register harnesses and check executable availability |
 | Benchmark library | `/benchmarks` | Inspect tasks, categories, verifiers, and requirements |
+| Agent Hub | `/hub` | Publish immutable source, browse releases, import agents, discuss and share benchmark summaries |
+| Community | `/community` | Draft agent/model/benchmark suggestions, review source/license links, and submit on GitHub |
 | Experiment builder | `/experiments/new` | Configure systems and conditions, validate, and launch |
 | Live experiments | `/experiments` | Follow progress, inspect errors, and cancel execution |
 | Comparison studio | `/compare` | Compare outcomes, uncertainty, categories, and known costs |
@@ -113,6 +127,8 @@ Edit [examples/openai-compatible-model.json](examples/openai-compatible-model.js
 Set `base_url` to the server's API root, usually `http[s]://host:port/v1`. Use the exact model ID advertised by `GET /models`. Generation requests go to `/chat/completions` relative to the base URL.
 
 If authentication is required, set `BENCH_AGENTS_PROVIDER_KEY` in the backend's environment using your credential-management method. The configuration stores the variable name. Remove `api_key_env` for a credential-free endpoint. Keep keys out of URLs, configuration values, descriptions, and frontend variables.
+
+The website and guided terminal also accept a hidden **session API key**. The backend retains its value only in memory and saves a generated reference. Re-enter it in the model inspector after restarting the backend, or when using the configuration from a different terminal process. Keys are not written to the database, reports or browser storage. Hosted mode currently uses the OpenAI-compatible chat protocol; native provider protocols need a supported adapter or compatible gateway.
 
 Register, probe, and evaluate the endpoint:
 
@@ -160,6 +176,16 @@ A controlled generic harness must bind the selected model name and endpoint thro
 
 ## Understand tasks and results
 
+### Run multiple agents with multiple models
+
+Register each existing endpoint and each trusted custom subprocess agent, then select **Multiple agents × multiple models** in the experiment builder. Select the models and agents independently. For example, two models and three agents produce six explicit pairs. The preview shows each pair and the task-check count before preflight and launch. Terminal action **8 — Test multiple models + agents** provides the same workflow.
+
+Each pair uses its selected model ID, endpoint and credential bindings. There is a maximum of 16 pairs per experiment. Pairs execute sequentially under the shared total budget; no model weights are loaded by Bench Agents. Native Codex/OpenCode products keep their own provider settings and stay in native mode. See [Testing](docs/testing.md#multiple-models-and-agents) for the complete walkthrough.
+
+### Share agents and recommendations
+
+Open **Community** to suggest an open-source agent, model pairing or benchmark. Include a public source URL, license, exact recommended model names and optional evidence links. Save a local draft, review the GitHub submission, then submit it yourself or download contribution JSON for a catalog pull request. Accepted recommendations appear through catalog updates. Community entries are unverified suggestions and do not automatically register or run code. Read the [contribution guide](docs/community.md).
+
 `starter-v1` contains ten original public fixtures. Eight text tasks run by default; filesystem normalization and Python coding verification require explicit selection and compatible capabilities.
 
 | Tasks | Verification | Boundary |
@@ -194,6 +220,7 @@ The guided terminal uses readable tables and live progress. Scriptable commands 
 | `bench-agents cancel experiment_id` | Request persisted cancellation |
 | `bench-agents worker` | Process the durable queue without the dashboard |
 | `bench-agents ui --api-only` | Start the API without frontend source dependencies |
+| `bench-agents hub` | Start the separate source registry on loopback port 8100 |
 
 Prefix commands with `uv run` in a source checkout. Replace `experiment_id`, `run_a`, and `run_b` with saved IDs. Run `uv run bench-agents --help` or a subcommand's `--help` for its options.
 
@@ -228,6 +255,8 @@ The Python engine owns execution and persistence. Next.js calls FastAPI through 
 ```mermaid
 flowchart LR
     Web[Next.js dashboard] --> API[FastAPI]
+    API --> Hub[Separate Agent Hub registry]
+    Hub <--> Releases[(Accounts and immutable source releases)]
     API --> Engine[Experiment engine]
     CLI[CLI / Python SDK] --> Engine
     Engine <--> Store[(SQLite and local artifacts)]
@@ -268,16 +297,16 @@ The recorded local audit is dated **2026-10-23**. These are observed test result
 
 | Check | Recorded result |
 | --- | --- |
-| Backend suite with optional Inspect installed | 88 passed, 4 Docker runtime tests skipped |
-| Backend statement coverage | 83% |
-| Frontend component/form tests | 17 passed |
-| Browser tests against the actual API | 18 passed |
+| Backend suite with optional Inspect installed | 231 passed, 4 Docker runtime tests skipped |
+| Backend statement coverage | 86% |
+| Frontend component/form tests | 33 passed |
+| Browser tests against the actual API | 21 passed |
 | All host-safe offline fixtures | Reference 9/9; deliberate negative fixture 0/9 |
 | Local HTTP providers and controlled subprocess pair | Passed through the real request/execution pipeline |
 | Isolated wheel install and clean frontend install/build/start | Passed |
 | Tested dependency audits | No known vulnerabilities reported at audit time |
 
-Browser checks covered twelve routes at 1440, 1024, 768, and 390 px. Accessibility scans covered the overview, builder, and replay workflows. Windows was tested locally; Linux/macOS execution and hosted CI results are not claimed by this audit.
+Browser checks cover fourteen routes at 1440, 1024, 768, and 390 px. Accessibility scans cover the overview, builder, Community and replay workflows. Windows was tested locally; Linux/macOS execution and hosted CI results are not claimed by this audit.
 
 The following gates remain open:
 
@@ -311,12 +340,12 @@ npm run typecheck --prefix apps/web
 npm run format:check --prefix apps/web
 ```
 
-Browser tests deliberately register fixtures and run experiments. Use a **fresh separate data directory** for their API on port 8000, enable the test subprocess opt-in, and run the dashboard on 3000. Stop the usual API first; full instructions are in [Testing](docs/testing.md#automated-checks). Then install the browser-test dependencies and run Playwright:
+Browser tests deliberately publish fixtures and run experiments. Stop your usual dashboard/API first, build the web app, then use the isolated runner below. It starts fresh Lab/Hub services, runs the real browser pipeline and stops its own services. It leaves your normal workspace untouched:
 
 ```shell
 npm ci
 npx playwright install chrome
-npm run test:e2e
+uv run python scripts/test_browser.py
 ```
 
 Run `uv run python scripts/full_offline.py` to exercise every host-safe deterministic fixture. Docker runtime tests require the setup in the [integration guide](docs/integrations.md). See [CONTRIBUTING.md](CONTRIBUTING.md) for development and review conventions.
@@ -327,6 +356,8 @@ Use these references for details beyond installation:
 
 - [Architecture and contracts](docs/architecture.md)
 - [Testing walkthrough and expected outcomes](docs/testing.md)
+- [Community contributions and public catalog](docs/community.md)
+- [Agent Hub release contract and hosting](docs/hub-server.md)
 - [Configuration and credential handling](docs/configuration.md)
 - [CLI, REST, and SDK reference](docs/interfaces.md)
 - [Benchmark methodology](docs/methodology.md)

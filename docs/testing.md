@@ -11,9 +11,9 @@ uv sync --locked --python 3.12
 uv run bench-agents terminal
 ```
 
-1. Choose **1 — Connect a model**. Give it a display name, choose OpenAI-compatible or Ollama, and enter the endpoint URL and exact provider model ID. For an authenticated service, enter the **environment variable name**, such as `BENCH_AGENTS_PROVIDER_KEY`; the key must already be available in the shell that launched Bench Agents. Leave this blank for an unauthenticated local service. Do not paste a key into a name or URL.
+1. Choose **1 — Connect a model**. Give it a display name, choose OpenAI-compatible or Ollama, select local or hosted, and enter the endpoint URL and exact provider model ID. Authentication choices are no key, environment-variable reference, or hidden session-key entry. A session key stays only in this terminal process; an environment key must already be available in its shell. Do not paste a key into a name or URL.
 2. Check the discovery result. **READY** means that discovery and the selected ID passed the available checks; generation still needs a run. **BLOCKED** includes the reason to fix, such as an unreachable server, missing ID or unavailable credential.
-3. Choose **3 — Test a model**, select the model, then **single reasoning task**. Keep the recommended limits: one trial, 30 seconds per task, 300 seconds total. Review compatibility and confirm the run. This sends a real request to your configured provider and may incur that provider's charges.
+3. Choose **3 — Test models**, select one or more models by number, then **single reasoning task**. Keep the recommended limits: one trial, 30 seconds per task, 300 seconds total. Review compatibility and confirm the run. This sends a real request to your configured provider and may incur that provider's charges.
 4. Read the result table. `1/1 verified` means that this task passed its independent check. `completed` means execution finished; it does not mean every output passed. Failed rows include the recorded reason. Unknown token counts and costs stay unavailable.
 5. Choose **6 — Inspect/export results** and export a ZIP report. After a second run, use **7 — Compare saved runs**. Comparisons explain incompatible conditions rather than hiding them.
 
@@ -60,13 +60,37 @@ uv run bench-agents ui
 
 Open [Bench Agents](http://127.0.0.1:3000). The overview explains the setup order and shows the actual inventory.
 
-1. **Register model** → enter endpoint and model ID → save → **Probe compatibility**. Saving alone does not prove connectivity.
+1. **Register model** → choose **Local server** or **Hosted API** → enter endpoint and model ID → choose authentication → save → **Probe compatibility**. A hosted OpenAI-compatible service can use a hidden session API key; a local service can choose no key. Environment references remain available. Saving alone does not prove connectivity.
 2. Choose **Build an experiment with this model**. Name it, select **Use one quick text task**, and keep one trial. The advanced section contains isolation, retries and technical configuration.
 3. **Validate compatibility** → resolve any blocking reasons → **Launch experiment**. The live monitor reports execution and task checks separately. Refreshing retains the experiment.
 4. Open **Execution replay** for failed output and verification evidence; use **Reports** to export. Use **Comparison studio** after a second run with matched conditions.
 5. To pair a trusted harness, register it in **Agent explorer** with the same bindings described above. Build in agent mode, choose the shared model and agent, authorize host execution, validate and launch. Both the backend setting and experiment authorization are required.
 
 The optional offline demonstration is under **Documentation**. It creates clearly labeled records only when clicked. To keep the live workspace free of fixtures, use the isolated offline command below instead.
+
+## Multiple models and agents
+
+Register the model endpoints separately: a local server, hosted API, or a mixture. Each keeps its own exact model ID, URL and optional credential. Register each trusted subprocess harness with its explicit model flag and endpoint/key environment mappings. Enable host execution only for the trusted harnesses as described above.
+
+On the website:
+
+1. Open **Experiment builder** and choose **Multiple agents × multiple models**.
+2. Select the models and controlled agents independently. Two models × two agents creates four explicit pairs; each pair is displayed before launch. Native CLI products remain in native mode.
+3. Choose **Use one quick text task** and one trial for setup verification. The preview should show **4 task checks** for a 2×2 selection.
+4. Authorize host processes, validate compatibility, review reasons/warnings and launch. Every selected pair gets the same task selection and limits, using its own model connection.
+5. Check all four run rows, inspect their manifests, then compare their run IDs and export the report. A provider failure remains a failed result rather than silently changing the model.
+
+In the terminal, choose **8 — Test multiple models + agents**. Enter comma-separated model numbers and agent numbers, or `all`. Review the combination list and check count, select tasks and limits, authorize execution, then confirm the launch. Actions 3 and 4 also accept multiple models or multiple agents respectively. Maximum: 16 systems per experiment; larger selections are blocked before discovery or execution.
+
+Pairs run sequentially to avoid exhausting RAM or overloading inference servers. The total budget applies to all pairs; increase it deliberately for a larger matrix. Session keys belong to the process where they were entered. After a backend restart, use **Re-enter session API key → Update session key** in the model inspector and probe again. A different terminal process prompts for missing session keys before running.
+
+## Share a community suggestion
+
+For actual source publishing and one-click import, use **Agent Hub**. Community is the separate reviewed suggestion catalog.
+
+Open **Community**, choose agent/pairing/benchmark, and enter a title, description, public source, license and suggested exact model names. Agent entries require a source and license. Save the local draft, then choose **Review GitHub submission**. Review the shown metadata before **Open GitHub to submit yourself**; GitHub sign-in and manual submission are required. Download JSON if you want to prepare a catalog pull request instead.
+
+Saving a draft does not publish it. Accepted catalog recommendations arrive through a repository update and remain labeled unverified. Source links do not execute or install code. See [Community contributions](community.md) for the review and publication workflow.
 
 ## Automated checks
 
@@ -99,25 +123,31 @@ npm run format:check --prefix apps/web
 npm run build --prefix apps/web
 ```
 
-Stop any running web server before rebuilding. For browser tests, stop the usual API first. In a new PowerShell terminal, choose a **new test directory for each complete run** because the first test checks empty startup:
-
-```powershell
-$env:BENCH_AGENTS_DATA_DIR = ".bench-agents/browser-check-$(Get-Date -Format yyyyMMddHHmmss)"
-$env:BENCH_AGENTS_ALLOW_HOST_PROCESS = "1"
-uv run uvicorn benchlab.api:app_factory --factory --host 127.0.0.1 --port 8000
-```
-
-Start the built web server in another terminal with `npm run start --prefix apps/web`. In a third terminal:
+Stop your usual dashboard/API before rebuilding and running browser tests. The runner refuses occupied ports rather than stopping another service. After the build, install the browser dependencies and run:
 
 ```shell
 npm ci
 npx playwright install chrome
-npm run test:e2e
+uv run python scripts/test_browser.py
 ```
 
-The browser suite checks empty onboarding, forms, a real HTTP-backed controlled agent run, explicit demo execution, verification failures, cancellation, refresh, comparison, replay, ablation, downloads, import, keyboard access, accessibility scans and all twelve routes at four widths. Its Python HTTP fixture is started and stopped by the suite. Saved test configurations are intentionally confined to the test workspace.
+The runner creates new Lab and Hub directories under `.bench-agents/browser-checks/<timestamp>`, starts them on 8000/8101 and the built website on 3000, then stops its owned services on success or failure. Its environment excludes provider keys. Do not point browser tests at data you intend to keep.
 
-Stop the test API and start `bench-agents ui` from your normal shell, without the temporary data-directory setting, to return to the clean live workspace. Do not point browser tests at data you intend to keep.
+The 21 browser tests cover empty onboarding, forms, real HTTP/subprocess execution, a 2×2 matrix across local and API-key fixture connections, Community review/exports, account registration, source publication, pinned import, benchmarking the imported agent and sharing the versioned result. They also cover cancellation, persistence, comparison, replay, ablation, downloads, keyboard access, accessibility scans and fourteen routes at four widths. Fixture HTTP services start and stop automatically. Start `uv run bench-agents ui` afterward to return to your normal workspace.
+
+## Agent Hub: complete developer walkthrough
+
+`bench-agents ui` starts a separate empty local Hub on 8100 unless `BENCH_AGENTS_HUB_URL` selects another registry. Start the registry independently with `uv run bench-agents hub`.
+
+1. Open **Agent Hub → Create account**. Browsing and import need no account; publication, comments and shared results require one.
+2. **Publish an agent**: enter details, a unique slug, semantic version and license. Describe inputs, outputs and model requirements in the README. Paste Python/Node.js source or upload text files and set the entrypoint. The harness reads a prompt from stdin and returns final text on stdout.
+3. Add recommended exact model IDs. Under **Model bindings, arguments and dependencies**, supply the model flag and environment variable names your harness expects; credential values belong in private model registrations. Declare dependencies for users to review separately.
+4. Inspect the published source and digest. **Import agent** registers it without execution or dependency installation. Edited imported source/configuration cannot run under that release identity; publish a new version or register a separate custom harness for changes.
+5. Connect an authorized endpoint in **Model explorer**. Review dependencies and trust the code before enabling the backend host-process setting. Choose **Benchmark imported agent**, select a model and one quick task, authorize the experiment, validate and launch.
+6. Inspect replay/evidence after completion. **Share this benchmark in Agent Hub** previews the actual local model, benchmark and pass count. Sign in and share. The report stays tied to its original registry and version and is labeled self-reported. This action sends no keys or raw private traces.
+7. Use release section links for usage, source, benchmark summaries and discussion. Owners can **Publish new version**; existing releases cannot be overwritten.
+
+For a shared registry, follow [Self-hosting Agent Hub](hub-server.md). Public moderation, quotas and account recovery remain deployment responsibilities. Arbitrary frameworks may need a compatible wrapper and separate dependency setup.
 
 ## Remaining external checks
 
