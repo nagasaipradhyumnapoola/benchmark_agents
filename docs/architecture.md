@@ -1,4 +1,4 @@
-# BenchLab architecture and design contract
+# Bench Agents architecture and design contract
 
 ## Intent and implementation authority
 
@@ -33,7 +33,7 @@ Bind to loopback; restrict Origin/Host; no shell strings through API. Credential
 
 ## Visual contract
 
-Brand: BenchLab / Experimental systems laboratory. Deep black canvas (#0b0c0e), graphite surfaces (#131518), charcoal elevations (#1b1e22), neutral borders (#2b2e33), off-white text (#f1f2f3), secondary silver (#a5aab3). One reserved subdued semantic palette for status and charts. Geist Sans + Mono; 13–16px body, 28–34px page titles. 4px spacing scale, 6–10px radius. Restrained persistent 232px sidebar, compact utility header and max-width content; overview uses a genuine experiment activity panel, narrow metric strip, task evidence table and capability inventory. Comparison uses statistical plots/tables; replay uses timeline/inspector. No decorative scores, no bright gradients, no identical card grid for every screen.
+Brand: Bench Agents / Experimental systems laboratory. Deep black canvas (#0b0c0e), graphite surfaces (#131518), charcoal elevations (#1b1e22), neutral borders (#2b2e33), off-white text (#f1f2f3), secondary silver (#a5aab3). One reserved subdued semantic palette for status and charts. Geist Sans + Mono; 13–16px body, 28–34px page titles. 4px spacing scale, 6–10px radius. Restrained persistent 232px sidebar, compact utility header and max-width content; overview uses a genuine experiment activity panel, narrow metric strip, task evidence table and capability inventory. Comparison uses statistical plots/tables; replay uses timeline/inspector. No decorative scores, no bright gradients, no identical card grid for every screen.
 
 At 1024px condense navigation; 768px use a sheet; 390px stack panels, scroll tables inside contained regions and keep 44px targets. Keyboard-visible focus, explicit labels, accessible modal titles, reduced motion, genuine loading/error/empty states. shadcn Radix primitives, Lucide icons, semantic Tailwind v4 tokens. API polling while jobs are active, durable page refresh.
 

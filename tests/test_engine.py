@@ -7,9 +7,17 @@ from benchlab.schemas import ExperimentConfig, SystemSpec
 from benchlab.store import Store
 
 
+def demo_store(path):
+    from benchlab.service import install_demo_inventory
+
+    store = Store(path)
+    install_demo_inventory(store, include_agents=True)
+    return store
+
+
 @pytest.mark.asyncio
 async def test_demo_multi_trial_and_verification(tmp_path):
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     engine = Engine(s)
     c = ExperimentConfig(
         name="demo",
@@ -28,7 +36,7 @@ async def test_demo_multi_trial_and_verification(tmp_path):
 
 @pytest.mark.asyncio
 async def test_rejects_demo_mislabel(tmp_path):
-    e = Engine(Store(tmp_path))
+    e = Engine(demo_store(tmp_path))
     c = ExperimentConfig(name="bad", systems=[SystemSpec(model_id="demo-reference")])
     assert not (await e.validate(c)).compatible
 
@@ -48,7 +56,7 @@ async def test_cancel_interrupts_await(tmp_path, monkeypatch):
             stopped.set()
 
     monkeypatch.setattr(registry, "execute_system", slow)
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     e = Engine(s)
     row = await e.submit(
         ExperimentConfig(name="cancel", demo=True, systems=[SystemSpec(model_id="demo-reference")])
@@ -69,7 +77,7 @@ async def test_timeout_counts_all_tasks_and_retries(tmp_path, monkeypatch):
         await asyncio.sleep(10)
 
     monkeypatch.setattr(registry, "execute_system", slow)
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     e = Engine(s)
     row = await e.submit(
         ExperimentConfig(
@@ -91,7 +99,7 @@ async def test_timeout_counts_all_tasks_and_retries(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_budget_failure_records_every_task(tmp_path):
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     e = Engine(s)
     row = await e.submit(
         ExperimentConfig(
@@ -114,7 +122,7 @@ async def test_host_agent_requires_optin_before_queue(tmp_path, monkeypatch):
     from benchlab.schemas import AgentConfig
 
     monkeypatch.delenv("BENCHLAB_ALLOW_HOST_PROCESS", raising=False)
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     a = s.save_agent(AgentConfig(name="process", adapter="subprocess", executable=sys.executable))
     c = ExperimentConfig(name="host", mode="agent", systems=[SystemSpec(agent_id=a["id"])])
     assert not (await Engine(s).validate(c)).compatible
@@ -124,7 +132,7 @@ async def test_host_agent_requires_optin_before_queue(tmp_path, monkeypatch):
 async def test_mixed_demo_components_rejected(tmp_path):
     from benchlab.schemas import ModelConfig
 
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     model = s.save_model(
         ModelConfig(
             name="real",
@@ -157,9 +165,9 @@ async def test_two_engines_execute_once_and_cross_cancel(tmp_path, monkeypatch):
             stopped.set()
 
     monkeypatch.setattr(registry, "execute_system", slow)
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     first = Engine(s)
-    second = Engine(Store(tmp_path))
+    second = Engine(demo_store(tmp_path))
     row = await first.submit(
         ExperimentConfig(
             name="concurrent", demo=True, systems=[SystemSpec(model_id="demo-reference")]
@@ -194,7 +202,7 @@ async def test_observed_usage_budget_counts_failed_verification_attempt(tmp_path
 
     monkeypatch.setattr(registry, "execute_system", output)
     monkeypatch.setattr(verification, "verify", broken)
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     e = Engine(s)
     row = await e.submit(
         ExperimentConfig(
@@ -216,7 +224,7 @@ async def test_observed_usage_budget_counts_failed_verification_attempt(tmp_path
 async def test_agent_comparison_records_controlled_model_condition(tmp_path):
     from benchlab.analysis import compare_runs
 
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     e = Engine(s)
     runs = []
     for model in ["demo-reference", "demo-flawed"]:
@@ -239,7 +247,7 @@ async def test_persisted_cancel_checked_at_task_boundary(tmp_path, monkeypatch):
     from benchlab.adapters import registry
     from benchlab.schemas import AdapterOutput
 
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     e = Engine(s)
     calls = []
     row = await e.submit(
@@ -250,7 +258,7 @@ async def test_persisted_cancel_checked_at_task_boundary(tmp_path, monkeypatch):
 
     async def output(*args, **kwargs):
         calls.append(1)
-        Engine(Store(tmp_path)).cancel(row["id"])
+        Engine(demo_store(tmp_path)).cancel(row["id"])
         return AdapterOutput(text="37")
 
     monkeypatch.setattr(registry, "execute_system", output)
@@ -261,7 +269,7 @@ async def test_persisted_cancel_checked_at_task_boundary(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_controlled_agent_mode_requires_explicit_model(tmp_path):
-    e = Engine(Store(tmp_path))
+    e = Engine(demo_store(tmp_path))
     config = ExperimentConfig(
         name="agent", mode="agent", demo=True, systems=[SystemSpec(agent_id="demo-agent")]
     )
@@ -279,7 +287,7 @@ async def test_outer_worker_cancellation_propagates(tmp_path, monkeypatch):
         await asyncio.sleep(100)
 
     monkeypatch.setattr(registry, "execute_system", slow)
-    s = Store(tmp_path)
+    s = demo_store(tmp_path)
     e = Engine(s)
     row = await e.submit(
         ExperimentConfig(

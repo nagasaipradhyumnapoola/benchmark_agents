@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FlaskConical, Play, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,11 @@ export function Builder() {
       : params.get("agent")
         ? [{ agent_id: params.get("agent")! }]
         : [],
-    mode: params.get("agent") ? "agent" : "model",
+    mode: params.get("agent")
+      ? params.get("mode") === "native"
+        ? "native"
+        : "agent"
+      : "model",
   }));
   const catalog = useApi<Benchmark>(`/benchmarks/${config.benchmark_id}`);
   const [sharedModel, setSharedModel] = useState("");
@@ -97,7 +102,10 @@ export function Builder() {
     );
   }
   function payload() {
-    const value = { ...config, ...(advanced ? JSON.parse(advanced) : {}) };
+    const overrides = advanced ? JSON.parse(advanced) : {};
+    if (!overrides || Array.isArray(overrides) || typeof overrides !== "object")
+      throw new Error("overrides");
+    const value = { ...config, ...overrides };
     value.demo = value.systems.some(
       (s: SystemSpec) =>
         models.data?.find((m) => m.id === s.model_id)?.config.demo ||
@@ -120,6 +128,14 @@ export function Builder() {
       setLocalError("Advanced overrides must contain a valid JSON object.");
     }
   }
+  const availableAgents =
+    agents.data?.filter((agent) =>
+      config.mode === "native"
+        ? agent.config.native
+        : config.mode === "agent"
+          ? !agent.config.native
+          : true,
+    ) ?? [];
   const selectedDemo = config.systems.some(
     (s) =>
       models.data?.find((m) => m.id === s.model_id)?.config.demo ||
@@ -197,37 +213,75 @@ export function Builder() {
                 <div className="form-section">
                   <h2>Systems under test</h2>
                   <p className="muted text-xs mb-3">
-                    Controlled agent comparisons require the same underlying
-                    model. Native mode records product conditions separately.
+                    {config.mode === "model"
+                      ? "Select the registered models to evaluate. For a first run, one model is enough."
+                      : "Controlled agent comparisons use one shared model. Native mode uses each installed product's own model and settings."}
                   </p>
+                  {(
+                    config.mode === "model"
+                      ? !models.data?.length
+                      : !availableAgents.length
+                  ) ? (
+                    <div className="notice info">
+                      <div>
+                        <strong>
+                          {config.mode === "model"
+                            ? "Register a model before launching"
+                            : "Register an agent before launching"}
+                        </strong>
+                        <p>
+                          {config.mode === "model"
+                            ? "Save your endpoint and model identifier, then check compatibility."
+                            : "Add a custom harness or an installed CLI product in Agent explorer."}
+                        </p>
+                        <Link
+                          className="subtle-link"
+                          href={config.mode === "model" ? "/models" : "/agents"}
+                        >
+                          {config.mode === "model"
+                            ? "Open Model explorer"
+                            : "Open Agent explorer"}{" "}
+                          →
+                        </Link>
+                      </div>
+                    </div>
+                  ) : null}
                   {["agent", "native", "matrix"].includes(config.mode) ? (
                     <>
-                      <label className="field mb-3">
-                        <span>Shared model for agent evaluation</span>
-                        <select
-                          value={sharedModel}
-                          onChange={(e) => {
-                            setSharedModel(e.target.value);
-                            update(
-                              "systems",
-                              config.systems.map((s) => ({
-                                ...s,
-                                model_id: e.target.value || undefined,
-                              })),
-                            );
-                          }}
-                        >
-                          <option value="">
-                            Select model, or native product default
-                          </option>
-                          {models.data?.map((m) => (
-                            <option value={m.id} key={m.id}>
-                              {m.config.name}
+                      {config.mode !== "native" ? (
+                        <label className="field mb-3">
+                          <span>Shared model for agent evaluation</span>
+                          <select
+                            value={sharedModel}
+                            onChange={(e) => {
+                              setSharedModel(e.target.value);
+                              update(
+                                "systems",
+                                config.systems.map((s) => ({
+                                  ...s,
+                                  model_id: e.target.value || undefined,
+                                })),
+                              );
+                            }}
+                          >
+                            <option value="">
+                              Select model, or native product default
                             </option>
-                          ))}
-                        </select>
-                      </label>
-                      {agents.data?.map((a) => (
+                            {models.data?.map((m) => (
+                              <option value={m.id} key={m.id}>
+                                {m.config.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : (
+                        <p className="registration-note mb-4">
+                          Native products use their own model and provider
+                          settings. A registered model is not paired in this
+                          mode.
+                        </p>
+                      )}
+                      {availableAgents.map((a) => (
                         <label className="check-row" key={a.id}>
                           <input
                             type="checkbox"
@@ -248,7 +302,10 @@ export function Builder() {
                                       ...config.systems,
                                       {
                                         agent_id: a.id,
-                                        model_id: sharedModel || undefined,
+                                        model_id:
+                                          config.mode === "native"
+                                            ? undefined
+                                            : sharedModel || undefined,
                                       },
                                     ],
                               );
@@ -344,6 +401,28 @@ export function Builder() {
                   </div>
                   <Button
                     type="button"
+                    variant="outline"
+                    className="mt-4 mr-3"
+                    onClick={() => {
+                      const task = catalog.data?.tasks?.find(
+                        (t) =>
+                          !t.requires_execution &&
+                          !t.required_capabilities?.includes("workspace"),
+                      );
+                      if (task) update("task_ids", [task.id]);
+                    }}
+                    disabled={
+                      !catalog.data?.tasks?.some(
+                        (t) =>
+                          !t.requires_execution &&
+                          !t.required_capabilities?.includes("workspace"),
+                      )
+                    }
+                  >
+                    Use one quick text task
+                  </Button>
+                  <Button
+                    type="button"
                     variant="ghost"
                     className="mt-3"
                     onClick={() =>
@@ -365,141 +444,175 @@ export function Builder() {
                 <div className="form-section">
                   <h2>Budget and reproducibility</h2>
                   <div className="form-grid">
-                    {(
-                      [
-                        ["trials", "Trials", 1, 50],
-                        [
-                          "budget_seconds",
-                          "Total wall-clock budget (s)",
-                          1,
-                          86400,
-                        ],
-                        ["task_timeout_seconds", "Task timeout (s)", 1, 3600],
-                        ["max_tokens", "Max tokens per task", 1, 131072],
-                        ["retries", "Retry limit", 0, 3],
-                        ["seed", "Seed", 0, 2147483647],
-                        ["memory_mb", "Sandbox memory (MiB)", 64, 32768],
-                        ["cpus", "Sandbox CPU limit", 0.1, 16],
-                      ] as const
-                    ).map(([key, label, min, max]) => (
-                      <label className="field" key={key}>
-                        <span>{label}</span>
-                        <Input
-                          type="number"
-                          min={min}
-                          max={max}
-                          step={key === "cpus" ? ".1" : "1"}
-                          value={config[key]}
-                          onChange={(e) => update(key, Number(e.target.value))}
-                        />
-                      </label>
-                    ))}
                     <label className="field">
-                      <span>Total token budget (optional)</span>
+                      <span>Trials</span>
                       <Input
                         type="number"
                         min="1"
-                        value={config.max_total_tokens ?? ""}
+                        max="50"
+                        value={config.trials}
                         onChange={(e) =>
-                          update(
-                            "max_total_tokens",
-                            e.target.value ? Number(e.target.value) : null,
-                          )
+                          update("trials", Number(e.target.value))
                         }
                       />
+                      <small>
+                        Repeat each system under the same conditions. Start with
+                        1.
+                      </small>
                     </label>
                     <label className="field">
-                      <span>Total cost budget, USD (optional)</span>
+                      <span>Total wall-clock budget (s)</span>
                       <Input
                         type="number"
-                        min="0.000001"
-                        step="any"
-                        value={config.max_cost_usd ?? ""}
+                        min="1"
+                        max="86400"
+                        value={config.budget_seconds}
                         onChange={(e) =>
-                          update(
-                            "max_cost_usd",
-                            e.target.value ? Number(e.target.value) : null,
-                          )
+                          update("budget_seconds", Number(e.target.value))
                         }
                       />
-                      <small>
-                        Requires provider usage and configured pricing.
-                      </small>
-                    </label>
-                    <label className="field">
-                      <span>Isolation</span>
-                      <select
-                        value={config.isolation}
-                        onChange={(e) => update("isolation", e.target.value)}
-                      >
-                        <option value="workspace">
-                          Workspace (non-code tasks)
-                        </option>
-                        <option value="docker">Hardened Docker</option>
-                      </select>
-                    </label>
-                    <label className="field">
-                      <span>Allowed tools (comma separated)</span>
-                      <Input
-                        value={config.tools.join(", ")}
-                        onChange={(e) =>
-                          update(
-                            "tools",
-                            e.target.value
-                              .split(",")
-                              .map((t) => t.trim())
-                              .filter(Boolean),
-                          )
-                        }
-                      />
+                      <small>Maximum time for the whole experiment.</small>
                     </label>
                   </div>
-                  <label className="check-row">
-                    <input
-                      type="checkbox"
-                      checked={config.allow_host_process}
-                      onChange={(e) =>
-                        update("allow_host_process", e.target.checked)
-                      }
-                    />
-                    <span>
-                      <strong>
-                        Authorize host agent processes for this experiment
-                      </strong>
+                  {["agent", "native", "matrix"].includes(config.mode) ? (
+                    <>
+                      {" "}
+                      <label className="check-row">
+                        <input
+                          type="checkbox"
+                          checked={config.allow_host_process}
+                          onChange={(e) =>
+                            update("allow_host_process", e.target.checked)
+                          }
+                        />
+                        <span>
+                          <strong>
+                            Authorize host agent processes for this experiment
+                          </strong>
+                          <small>
+                            Required for local CLI agent adapters; generated
+                            code still requires Docker.
+                          </small>
+                        </span>
+                      </label>
+                    </>
+                  ) : null}
+                  <details className="details-disclosure">
+                    <summary>Advanced limits, isolation and parameters</summary>
+                    <div className="form-grid">
+                      {(
+                        [
+                          ["task_timeout_seconds", "Task timeout (s)", 1, 3600],
+                          ["max_tokens", "Max tokens per task", 1, 131072],
+                          ["retries", "Retry limit", 0, 3],
+                          ["seed", "Seed", 0, 2147483647],
+                          ["memory_mb", "Sandbox memory (MiB)", 64, 32768],
+                          ["cpus", "Sandbox CPU limit", 0.1, 16],
+                        ] as const
+                      ).map(([key, label, min, max]) => (
+                        <label className="field" key={key}>
+                          <span>{label}</span>
+                          <Input
+                            type="number"
+                            min={min}
+                            max={max}
+                            step={key === "cpus" ? ".1" : "1"}
+                            value={config[key]}
+                            onChange={(e) =>
+                              update(key, Number(e.target.value))
+                            }
+                          />
+                        </label>
+                      ))}
+                      <label className="field">
+                        <span>Total token budget (optional)</span>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={config.max_total_tokens ?? ""}
+                          onChange={(e) =>
+                            update(
+                              "max_total_tokens",
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="field">
+                        <span>Total cost budget, USD (optional)</span>
+                        <Input
+                          type="number"
+                          min="0.000001"
+                          step="any"
+                          value={config.max_cost_usd ?? ""}
+                          onChange={(e) =>
+                            update(
+                              "max_cost_usd",
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
+                        />
+                        <small>
+                          Requires provider usage and configured pricing.
+                        </small>
+                      </label>
+                      <label className="field">
+                        <span>Isolation</span>
+                        <select
+                          value={config.isolation}
+                          onChange={(e) => update("isolation", e.target.value)}
+                        >
+                          <option value="workspace">
+                            Workspace (non-code tasks)
+                          </option>
+                          <option value="docker">Hardened Docker</option>
+                        </select>
+                      </label>
+                      <label className="field">
+                        <span>Allowed tools (comma separated)</span>
+                        <Input
+                          value={config.tools.join(", ")}
+                          onChange={(e) =>
+                            update(
+                              "tools",
+                              e.target.value
+                                .split(",")
+                                .map((t) => t.trim())
+                                .filter(Boolean),
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
+                    <label className="check-row">
+                      <input
+                        type="checkbox"
+                        checked={config.network}
+                        onChange={(e) => update("network", e.target.checked)}
+                      />
+                      <span>
+                        Request network access (runtime policy may reject)
+                      </span>
+                    </label>
+                    <label className="field">
+                      <span>Advanced experiment overrides (JSON)</span>
+                      <textarea
+                        rows={3}
+                        value={advanced}
+                        onChange={(e) => {
+                          setAdvanced(e.target.value);
+                          setValidation(null);
+                        }}
+                        placeholder={
+                          '{"systems": [{"model_id": "registered-id", "parameters": {"temperature": 0}}]}'
+                        }
+                      />
                       <small>
-                        Required for local CLI agent adapters; generated code
-                        still requires Docker.
+                        Supports complete schema configuration, including matrix
+                        systems and per-system parameters.
                       </small>
-                    </span>
-                  </label>
-                  <label className="check-row">
-                    <input
-                      type="checkbox"
-                      checked={config.network}
-                      onChange={(e) => update("network", e.target.checked)}
-                    />
-                    <span>
-                      Request network access (runtime policy may reject)
-                    </span>
-                  </label>
-                  <label className="field">
-                    <span>Advanced experiment overrides (JSON)</span>
-                    <textarea
-                      rows={3}
-                      value={advanced}
-                      onChange={(e) => {
-                        setAdvanced(e.target.value);
-                        setValidation(null);
-                      }}
-                      placeholder={
-                        '{"systems": [{"model_id": "registered-id", "parameters": {"temperature": 0}}]}'
-                      }
-                    />
-                    <small>
-                      Supports complete schema configuration, including matrix
-                      systems and per-system parameters.
-                    </small>
-                  </label>
+                    </label>
+                  </details>
                 </div>
                 <div className="form-section">
                   {localError ? (
@@ -510,12 +623,35 @@ export function Builder() {
                   <ErrorState error={validate.error || launch.error} />
                   {validation ? (
                     <div className="mb-4">
-                      <Status
-                        value={validation.compatible ? "completed" : "failed"}
-                      />
-                      <JsonView value={validation} />
+                      <div
+                        className={`notice ${validation.compatible ? "info" : "error"}`}
+                        role="status"
+                      >
+                        <div>
+                          <strong>
+                            {validation.compatible
+                              ? "Ready to launch"
+                              : "Resolve these issues before launching"}
+                          </strong>
+                          {validation.reasons.map((reason, i) => (
+                            <p key={i}>{reason}</p>
+                          ))}
+                          {validation.warnings.map((warning, i) => (
+                            <p key={i}>{warning}</p>
+                          ))}
+                        </div>
+                      </div>
+                      <details className="details-disclosure">
+                        <summary>Technical validation evidence</summary>
+                        <JsonView value={validation} />
+                      </details>
                     </div>
                   ) : null}
+                  <p className="registration-note">
+                    {validation?.compatible
+                      ? "Compatibility passed. Launch to queue the experiment and follow its results."
+                      : "Validate compatibility first. This checks your systems and settings without launching a job."}
+                  </p>
                   <div className="form-actions">
                     <Button
                       variant="outline"

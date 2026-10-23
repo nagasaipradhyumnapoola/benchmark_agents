@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,12 +12,14 @@ from typing import Annotated, Any, Literal
 from urllib.parse import urlsplit
 
 from fastapi import Body, FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
+from pydantic import ValidationError
 
 from benchlab import __version__
 from benchlab.schemas import AgentConfig, ExperimentConfig, ModelConfig
-from benchlab.service import demo_config, diagnostics
-from benchlab.settings import Settings, redact
+from benchlab.service import demo_config, diagnostics, install_demo_inventory
+from benchlab.settings import Settings, environment_setting, redact
 from benchlab.telemetry import FAILURE_CATEGORIES, metric_registry
 
 logger = logging.getLogger("benchlab.api")
@@ -58,7 +59,7 @@ def create_app(data_dir: Path | None = None, *, run_worker: bool = True) -> Fast
                 await job
             engine.recover()
 
-    application = FastAPI(title="BenchLab API", version=__version__, lifespan=lifespan)
+    application = FastAPI(title="Bench Agents API", version=__version__, lifespan=lifespan)
     application.state.store = store
     application.state.engine = engine
 
@@ -73,8 +74,9 @@ def create_app(data_dir: Path | None = None, *, run_worker: bool = True) -> Fast
             for hostname in ("localhost", "127.0.0.1")
             for port in (3000, 8000)
         }
-        if os.environ.get("BENCHLAB_WEB_ORIGIN"):
-            origins.add(os.environ["BENCHLAB_WEB_ORIGIN"])
+        trusted_origin = environment_setting("WEB_ORIGIN")
+        if trusted_origin:
+            origins.add(trusted_origin)
         if origin and origin not in origins:
             return JSONResponse(
                 {"detail": "Foreign Origin denied by local laboratory"}, status_code=403
@@ -100,6 +102,16 @@ def create_app(data_dir: Path | None = None, *, run_worker: bool = True) -> Fast
     async def invalid(_request: Request, error: ValueError):
         return JSONResponse({"detail": redact(str(error))}, status_code=422)
 
+    @application.exception_handler(RequestValidationError)
+    @application.exception_handler(ValidationError)
+    async def invalid_schema(_request: Request, error: Any):
+        # Validation errors normally include raw submitted inputs. Keep only field/reason.
+        messages = [
+            f"{'.'.join(str(part) for part in item['loc'])}: {item['msg']}"
+            for item in error.errors()
+        ]
+        return JSONResponse({"detail": redact("; ".join(messages))}, status_code=422)
+
     @application.exception_handler(PermissionError)
     async def forbidden(_request: Request, error: PermissionError):
         return JSONResponse({"detail": redact(str(error))}, status_code=403)
@@ -108,7 +120,7 @@ def create_app(data_dir: Path | None = None, *, run_worker: bool = True) -> Fast
         if config.allow_host_process and not Settings.from_env().allow_host_process:
             raise HTTPException(
                 403,
-                "Host process execution requires BENCHLAB_ALLOW_HOST_PROCESS=1 on the server and explicit experiment consent",
+                "Host process execution requires BENCH_AGENTS_ALLOW_HOST_PROCESS=1 on the server and explicit experiment consent",
             )
 
     @application.get("/api/health")
@@ -252,6 +264,7 @@ def create_app(data_dir: Path | None = None, *, run_worker: bool = True) -> Fast
 
     @application.post("/api/demo", status_code=201)
     async def demo() -> dict:
+        install_demo_inventory(store)
         return await engine.submit(demo_config())
 
     @application.get("/api/runs")

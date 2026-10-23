@@ -63,11 +63,8 @@ function Navigation({ close }: { close?: () => void }) {
   return (
     <>
       <Link href="/" className="brand" onClick={close}>
-        <span className="brand-mark">
-          <FlaskConical size={20} />
-        </span>
-        <span>
-          BenchLab<small>Experimental systems laboratory</small>
+        <span className="brand-name">
+          Bench <span>Agents</span>
         </span>
       </Link>
       <nav aria-label="Main navigation">
@@ -91,8 +88,10 @@ function Navigation({ close }: { close?: () => void }) {
         ))}
       </nav>
       <div className="sidebar-foot">
-        <span className="dot" /> Local workspace{" "}
-        <small>v0.1.0 · Development</small>
+        <Link href="/docs#terminal" className="terminal-nav">
+          <TerminalSquare size={16} /> Terminal guide <ArrowUpRight size={13} />
+        </Link>
+        <small>Local workspace · v0.1.0</small>
       </div>
     </>
   );
@@ -130,15 +129,11 @@ export function Workspace({ children }: { children: React.ReactNode }) {
                 <Navigation close={() => setOpen(false)} />
               </SheetContent>
             </Sheet>
-            <span className="crumb-workspace">Workspace</span>
+            <span className="crumb-workspace">Local workspace</span>
             <ChevronRight size={14} />
             <span>{label}</span>
           </div>
           <div className="utility-actions">
-            <span className="local-label">
-              <span className="dot" />
-              Local first
-            </span>
             <Button asChild variant="outline" size="sm">
               <Link href="/experiments/new">
                 <Play size={13} />
@@ -149,7 +144,10 @@ export function Workspace({ children }: { children: React.ReactNode }) {
         </header>
         <main id="main-content">{children}</main>
         <footer className="workspace-footer">
-          <span>BenchLab · Evidence before conclusions</span>
+          <span>
+            Bench Agents <span className="footer-divider">/</span> Local
+            benchmarking workspace
+          </span>
           <Link href="/docs">
             Methodology <ArrowUpRight size={12} />
           </Link>

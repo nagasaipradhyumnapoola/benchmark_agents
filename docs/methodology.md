@@ -1,6 +1,6 @@
 # Benchmark methodology
 
-BenchLab compares observable system behavior against an explicit objective, environment and independent verifier. It does not measure private reasoning or collapse unrelated capabilities into an intelligence score.
+Bench Agents compares observable system behavior against an explicit objective, environment and independent verifier. It does not measure private reasoning or collapse unrelated capabilities into an intelligence score.
 
 ## Original public starter set
 

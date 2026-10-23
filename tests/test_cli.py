@@ -11,7 +11,7 @@ def test_cli_catalog_and_demo_share_storage(tmp_path, monkeypatch):
     monkeypatch.setenv("BENCHLAB_DATA_DIR", str(tmp_path))
     response = runner.invoke(app, ["models", "list"])
     assert response.exit_code == 0, response.output
-    assert len(json.loads(response.stdout)) >= 2
+    assert json.loads(response.stdout) == []
     demo = runner.invoke(app, ["demo"])
     assert demo.exit_code == 0, demo.output
     experiment = json.loads(demo.stdout)

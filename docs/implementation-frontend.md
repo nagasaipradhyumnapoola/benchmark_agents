@@ -17,7 +17,7 @@ All twelve App Router destinations are functional and use the same-origin FastAP
 
 Design tokens and reasoning: docs/design.md. Built-in image_gen generated the requested concept BEFORE UI implementation and saved docs/evidence/concepts/workspace-concept.png. This is reference-only and no concept data or raster UI appears in the application.
 
-Prompt: "Use case: ui-mockup. Create a readable high fidelity concept board of three desktop screens for BenchLab, a local AI benchmarking research instrument. Three wide panels stacked vertically: Overview with recent experiment table and evidence/ inventory side panels; Comparison Studio with side-by-side verified task metrics and uncertainty interval plot; Execution Replay with narrow event timeline and wide JSON/evidence inspector. Premium restrained black #0b0c0e and graphite #131518, charcoal panels #1b1e22, subtle borders #2b2e33, off-white Geist-style typography, muted status colors only. Persistent slim sidebar, compact utility bar. No bright gradients or decorative illustrations. Use readable real UI labels and clearly mark any sample values DEMO CONCEPT. Dense purposeful engineering workspace, polished spacing. Entire image is a design reference only."
+Prompt: "Use case: ui-mockup. Create a readable high fidelity concept board of three desktop screens for Bench Agents, a local AI benchmarking research instrument. Three wide panels stacked vertically: Overview with recent experiment table and evidence/ inventory side panels; Comparison Studio with side-by-side verified task metrics and uncertainty interval plot; Execution Replay with narrow event timeline and wide JSON/evidence inspector. Premium restrained black #0b0c0e and graphite #131518, charcoal panels #1b1e22, subtle borders #2b2e33, off-white Geist-style typography, muted status colors only. Persistent slim sidebar, compact utility bar. No bright gradients or decorative illustrations. Use readable real UI labels and clearly mark any sample values DEMO CONCEPT. Dense purposeful engineering workspace, polished spacing. Entire image is a design reference only."
 
 Applied taste-skill brief inference/anti-default discipline, UI UX Pro Max contrast/navigation guidance, official shadcn CLI docs and generated Radix primitives, React state/performance guidance and local Impeccable Operate/craft-floor/polish guidance. Impeccable's launcher download was inspected and not executed; existing product/architecture/design contract supplied context. User's explicit autonomous implementation directive bypasses optional design approval rounds. Formal independent Impeccable critique is not claimed.
 
@@ -37,7 +37,7 @@ Official sources consulted: https://nextjs.org/docs/app/getting-started/installa
 npm --prefix apps/web ci
 npm --prefix apps/web run dev
 
-Frontend defaults http://127.0.0.1:3000 and forwards /api to http://127.0.0.1:8000. BENCHLAB_API_URL overrides backend origin (including Docker http://api:8000). Next output is standalone. Dev server currently root-shared running tool session 51799; stop with write_stdin Ctrl-C when parent no longer needs it.
+Frontend defaults http://127.0.0.1:3000 and forwards /api to http://127.0.0.1:8000. BENCH_AGENTS_API_URL overrides backend origin (including Docker http://api:8000). Next output is standalone. Dev server currently root-shared running tool session 51799; stop with write_stdin Ctrl-C when parent no longer needs it.
 
 ## Honest limitations
 

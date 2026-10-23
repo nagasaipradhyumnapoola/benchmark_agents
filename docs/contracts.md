@@ -4,7 +4,7 @@ All HTTP paths begin `/api`. GET list endpoints return arrays, not wrapper objec
 
 ## Store
 
-`Store(data_dir: Path)` creates `benchlab.sqlite3`, `.data_dir: Path`, `.artifacts_dir: Path`, `.workspaces_dir: Path`.
+`Store(data_dir: Path)` creates `bench-agents.sqlite3`, `.data_dir: Path`, `.artifacts_dir: Path`, `.workspaces_dir: Path`.
 
 - `list_models() -> list[dict]`; `save_model(config: ModelConfig) -> dict`; `get_model(id: str) -> dict`; `delete_model(id)`
 - `list_agents()`, `save_agent(config: AgentConfig)`, `get_agent(id)`, `delete_agent(id)`
@@ -15,7 +15,7 @@ All HTTP paths begin `/api`. GET list endpoints return arrays, not wrapper objec
 - `add_artifact(run_id: str, name: str, content: bytes, media_type: str = 'text/plain') -> dict`; `list_artifacts(run_id: str) -> list[dict]`; `artifact_path(run_id: str, artifact_id: str) -> Path`
 - `claim_next() -> dict | None` atomic queued→running experiment transition; `recover() -> int` marks interrupted jobs/runs and returns count.
 
-Rows expose `id`, configs under `config`, experiment `name`, `mode`, `status`, `created_at`, `updated_at`, `demo`; run `experiment_id`, `system_id`, `system_name`, `trial`, `status`, `manifest`, `metrics`, `error`, `started_at`, `finished_at`. `get_*` raise KeyError when absent. Store should seed two demo models (`demo-reference`, `demo-flawed`) and two demo agents (`demo-agent`, `demo-agent-flawed`); both must be clearly marked demo and seeded idempotently.
+Rows expose `id`, configs under `config`, experiment `name`, `mode`, `status`, `created_at`, `updated_at`, `demo`; run `experiment_id`, `system_id`, `system_name`, `trial`, `status`, `manifest`, `metrics`, `error`, `started_at`, `finished_at`. `get_*` raise KeyError when absent. New stores have empty inventories. Only an explicit demo request installs two labeled demo models (`demo-reference`, `demo-flawed`) idempotently; optional demo agents are test fixtures rather than startup data.
 
 ## Adapters / benchmarks
 
@@ -48,4 +48,4 @@ Each system×trial gets a run, tasks execute serially initially. `config.systems
 - GET `/diagnostics` -> runtime/storage/optional integrations, no credentials; GET `/metrics` -> typed metric definitions
 - GET `/settings` -> public local settings; POST `/import` (JSON experiment config only; no execution until separately launched) -> validated config
 
-Frontend same-origin Next.js rewrite `/api/:path*`→FastAPI localhost:8000. REST typed client uses TanStack Query with active-run polling. All twelve routes functional: `/`, `/models`, `/agents`, `/benchmarks`, `/experiments/new`, `/experiments`, `/compare`, `/replay`, `/optimize`, `/reports`, `/settings`, `/docs`. Dynamic experiment/run inspector can use search params. Empty state uses demo CTA. Export anchors same-origin. Model/agent forms use full config types, environment-var references for credentials. Config editing deletes/replaces only when no historical records depend on identity; prefer new registration version.
+Frontend same-origin Next.js rewrite `/api/:path*`→FastAPI localhost:8000. REST typed client uses TanStack Query with active-run polling. All twelve routes functional: `/`, `/models`, `/agents`, `/benchmarks`, `/experiments/new`, `/experiments`, `/compare`, `/replay`, `/optimize`, `/reports`, `/settings`, `/docs`. Dynamic experiment/run inspector can use search params. Empty overview guides model registration, optional agent setup and experiment creation. Demo execution is an explicit Documentation action. Export anchors same-origin. Model/agent forms use full config types, environment-var references for credentials. Config editing deletes/replaces only when no historical records depend on identity; prefer new registration version.

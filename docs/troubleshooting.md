@@ -2,7 +2,7 @@
 
 ## Docker Desktop does not start
 
-`benchlab doctor` reports runtime availability without starting Docker or pulling images. The implementation host's Docker Desktop fails while initializing its Inference-manager socket with `ERROR_CANT_ACCESS_FILE`; [Docker's issue tracker](https://github.com/docker/desktop-feedback/issues/625) has a matching report. This host condition is separate from application execution. The default offline demo remains usable. Repair/start a supported Docker Linux daemon before claiming sandbox tests or running the optional coding task. A factory reset can destroy local Docker data; BenchLab has not performed one.
+`bench-agents doctor` reports runtime availability without starting Docker or pulling images. The implementation host's Docker Desktop fails while initializing its Inference-manager socket with `ERROR_CANT_ACCESS_FILE`; [Docker's issue tracker](https://github.com/docker/desktop-feedback/issues/625) has a matching report. This host condition is separate from application execution. The default offline demo remains usable. Repair/start a supported Docker Linux daemon before claiming sandbox tests or running the optional coding task. A factory reset can destroy local Docker data; Bench Agents has not performed one.
 
 Once the daemon works, explicitly review and pull `python:3.12.10-slim`, then run the opt-in sandbox tests documented in `tests/test_sandbox.py`. No automatic image pull or host code fallback occurs. The Compose web/API stack intentionally cannot control the host Docker daemon.
 
@@ -16,7 +16,7 @@ Both server and per-experiment host-process opt-ins are required. A subprocess e
 
 ## Web cannot reach the API
 
-Start the backend at `127.0.0.1:8000`, then web at `127.0.0.1:3000`. Configure `BENCHLAB_API_URL` for another backend and rebuild/restart web. Host and Origin protections intentionally reject unknown remote origins. Give API/CLI/worker the same `BENCHLAB_DATA_DIR`. Do not run `next build` concurrently with `next dev` against the same `.next` directory; stop/restart the dev server after a build.
+Start the backend at `127.0.0.1:8000`, then web at `127.0.0.1:3000`. Configure `BENCH_AGENTS_API_URL` for another backend and rebuild/restart web. Host and Origin protections intentionally reject unknown remote origins. Give API/CLI/worker the same `BENCH_AGENTS_DATA_DIR`. Do not run `next build` concurrently with `next dev` against the same `.next` directory; stop/restart the dev server after a build.
 
 ## Interrupted or stuck experiments
 

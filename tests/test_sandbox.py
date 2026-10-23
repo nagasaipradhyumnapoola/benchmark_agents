@@ -81,10 +81,10 @@ async def test_docker_hardening_and_completion_contract(monkeypatch):
     ],
 )
 async def test_real_docker_rejects_adversarial_submission(code, tmp_path):
-    import os
+    from benchlab.settings import environment_setting
 
-    if os.environ.get("BENCHLAB_TEST_DOCKER") != "1":
-        pytest.skip("Docker runtime requires explicit BENCHLAB_TEST_DOCKER=1")
+    if environment_setting("TEST_DOCKER") != "1":
+        pytest.skip("Docker runtime requires explicit BENCH_AGENTS_TEST_DOCKER=1")
     from benchlab.benchmarks.catalog import get_tasks
     from benchlab.schemas import AdapterOutput, ExperimentConfig, SystemSpec
     from benchlab.verification import verify

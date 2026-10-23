@@ -1,11 +1,17 @@
 {
   "status": "passed",
-  "command": "uv run benchlab ui",
+  "command": "uv run bench-agents ui",
   "mode": "production build at default API port",
   "native_node_launch_without_cmd_shell": true,
   "api_startup": "passed",
   "web_page_http_200": "passed",
   "web_api_proxy": "passed",
-  "custom_port_dev_api_and_demo": "passed in isolated data directory; cold dev-page compile exceeded 45s on low-memory host",
+  "empty_live_inventory": {
+    "models": 0,
+    "agents": 0,
+    "experiments": 0,
+    "runs": 0
+  },
+  "host_agents_enabled": false,
   "telemetry_disabled": true
 }

@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowRight,
-  Database,
   Loader2,
   Play,
   RefreshCw,
@@ -142,18 +141,24 @@ export function DemoButton() {
 export function Empty({
   title = "No evidence yet",
   description = "Run an experiment to create durable, independently verified evidence.",
-  demo = true,
+  demo = false,
+  action,
 }: {
   title?: string;
   description?: string;
   demo?: boolean;
+  action?: React.ReactNode;
 }) {
   return (
     <div className="empty">
-      <Database size={28} />
       <h3>{title}</h3>
       <p>{description}</p>
-      {demo ? <DemoButton /> : null}
+      {action}
+      {demo ? (
+        <Link href="/docs" className="subtle-link">
+          Read the setup guide <ArrowRight size={14} />
+        </Link>
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 FROM python:3.12-slim-bookworm AS api
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 BENCHLAB_DATA_DIR=/data PATH=/app/.venv/bin:$PATH UV_LINK_MODE=copy
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 BENCH_AGENTS_DATA_DIR=/data PATH=/app/.venv/bin:$PATH UV_LINK_MODE=copy
 WORKDIR /app
 RUN groupadd --gid 10001 benchlab && useradd --uid 10001 --gid benchlab --create-home benchlab
 COPY pyproject.toml uv.lock README.md LICENSE ./
@@ -12,7 +12,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s CMD python -c "import
 CMD ["uvicorn", "benchlab.api:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8000"]
 
 FROM node:24-bookworm-slim AS web-build
-ENV NEXT_TELEMETRY_DISABLED=1 BENCHLAB_API_URL=http://api:8000
+ENV NEXT_TELEMETRY_DISABLED=1 BENCH_AGENTS_API_URL=http://api:8000
 WORKDIR /web
 COPY apps/web/package.json apps/web/package-lock.json ./
 RUN npm ci --ignore-scripts

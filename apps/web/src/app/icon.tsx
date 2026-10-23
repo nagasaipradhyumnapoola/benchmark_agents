@@ -10,15 +10,15 @@ export default function Icon() {
         justifyContent: "center",
         width: "100%",
         height: "100%",
-        background: "#1b1e22",
-        color: "#f1f2f3",
-        border: "1px solid #3a4048",
-        borderRadius: 7,
-        fontSize: 24,
-        fontWeight: 700,
+        background: "#111211",
+        color: "#eeede9",
+        borderRadius: 3,
+        fontSize: 16,
+        fontWeight: 650,
+        letterSpacing: -1,
       }}
     >
-      B
+      BA
     </div>,
     size,
   );

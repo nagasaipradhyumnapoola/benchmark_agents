@@ -60,7 +60,7 @@ async def run_python(
     if len(code.encode()) + len(test_code.encode()) > 1_000_000:
         raise ValueError("Code input too large")
     executable = state["executable"]
-    name = "benchlab-" + uuid.uuid4().hex
+    name = "bench-agents-" + uuid.uuid4().hex
     marker = "BENCHLAB_COMPLETED_" + uuid.uuid4().hex
     # Completion is required; exit(0) before tests cannot pass. This public harness is not an anti-cheat boundary.
     runner = "import sys,json\np=json.load(sys.stdin)\ng={}\nexec(compile(p['code'],'submission.py','exec'),g)\nexec(compile(p['tests'],'tests.py','exec'),g)\nsys.stdout.write(p['marker']+'\\n')\n"

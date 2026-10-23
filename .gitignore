@@ -10,6 +10,7 @@ build/
 node_modules/
 .next/
 .benchlab/
+.bench-agents/
 .env
 .env.*
 !.env.example

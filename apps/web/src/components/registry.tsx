@@ -34,7 +34,7 @@ export const modelDefaults: ModelConfig = {
   name: "",
   adapter: "openai-compatible",
   model: "",
-  base_url: "http://127.0.0.1:11434/v1",
+  base_url: "http://127.0.0.1:1234/v1",
   api_key_env: null,
   capabilities: ["text"],
   demo: false,
@@ -70,6 +70,13 @@ export function validateRegistration(
     config.env_allowlist.some((s) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(s))
   )
     return "Environment allowlist accepts variable names only.";
+  if (
+    "model_flag" in config &&
+    [config.model_base_url_env, config.model_api_key_env].some(
+      (value) => value && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value),
+    )
+  )
+    return "Model pairing accepts environment variable names only, never secret values.";
   return null;
 }
 function RegistrationForm({
@@ -77,21 +84,48 @@ function RegistrationForm({
   done,
 }: {
   kind: "models" | "agents";
-  done: () => void;
+  done: (id: string) => void;
 }) {
   const [config, setConfig] = useState<ModelConfig | AgentConfig>(
     kind === "models" ? { ...modelDefaults } : { ...agentDefaults },
   );
   const [advanced, setAdvanced] = useState("");
+  const [script, setScript] = useState("");
+  const [argumentsJson, setArgumentsJson] = useState("[]");
   const [error, setError] = useState<string | null>(null);
-  const action = useAction(`/${kind}`, done);
+  const action = useAction<Registration<ModelConfig | AgentConfig>>(
+    `/${kind}`,
+    (row) => done(row.id),
+  );
   function update(key: string, value: unknown) {
     setConfig((c) => ({ ...c, [key]: value }));
   }
   function submit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const merged = { ...config, ...(advanced ? JSON.parse(advanced) : {}) };
+      const overrides = advanced ? JSON.parse(advanced) : {};
+      if (
+        !overrides ||
+        Array.isArray(overrides) ||
+        typeof overrides !== "object"
+      )
+        throw new Error("overrides");
+      let prepared = config;
+      if ("executable" in config) {
+        const args = JSON.parse(argumentsJson);
+        if (
+          !Array.isArray(args) ||
+          !args.every((value) => typeof value === "string")
+        ) {
+          setError("Additional arguments must be a JSON array of text values.");
+          return;
+        }
+        prepared = {
+          ...config,
+          args: [...(script.trim() ? [script.trim()] : []), ...args],
+        };
+      }
+      const merged = { ...prepared, ...overrides };
       const message = validateRegistration(merged);
       if (message) {
         setError(message);
@@ -100,17 +134,27 @@ function RegistrationForm({
       setError(null);
       action.mutate(merged);
     } catch {
-      setError("Advanced configuration must be a JSON object.");
+      setError(
+        "Advanced configuration must be a JSON object and arguments must be a JSON array.",
+      );
     }
   }
   return (
     <form onSubmit={submit} className="stack">
+      <p className="registration-note">
+        {kind === "models"
+          ? "Save the address of a model you can access. After saving, probe compatibility to check that the backend can reach it."
+          : "Connect a custom subprocess harness or an installed CLI product. Saving a configuration does not execute it."}
+      </p>
       <div className="form-grid">
         <label className="field">
           <span>Display name</span>
           <Input
             required
             maxLength={120}
+            placeholder={
+              kind === "models" ? "My local model" : "My agent harness"
+            }
             value={config.name}
             onChange={(e) => update("name", e.target.value)}
           />
@@ -119,13 +163,42 @@ function RegistrationForm({
           <span>Adapter</span>
           <select
             value={config.adapter}
-            onChange={(e) => update("adapter", e.target.value)}
+            onChange={(e) => {
+              const adapter = e.target.value;
+              setConfig((current) =>
+                "model" in current
+                  ? {
+                      ...current,
+                      adapter,
+                      base_url:
+                        adapter === "ollama"
+                          ? "http://127.0.0.1:11434"
+                          : adapter === "openai-compatible"
+                            ? "http://127.0.0.1:1234/v1"
+                            : current.base_url,
+                    }
+                  : { ...current, adapter },
+              );
+            }}
           >
             {(kind === "models"
               ? ["openai-compatible", "ollama", "demo"]
               : ["subprocess", "codex-cli", "opencode-cli", "demo"]
             ).map((a) => (
-              <option key={a}>{a}</option>
+              <option key={a} value={a}>
+                {
+                  (
+                    {
+                      "openai-compatible": "OpenAI-compatible endpoint",
+                      ollama: "Ollama (native API)",
+                      subprocess: "Custom subprocess harness",
+                      "codex-cli": "Codex CLI (experimental)",
+                      "opencode-cli": "OpenCode CLI (experimental)",
+                      demo: "Offline demonstration adapter",
+                    } as Record<string, string>
+                  )[a]
+                }
+              </option>
             ))}
           </select>
         </label>
@@ -135,9 +208,14 @@ function RegistrationForm({
               <span>Provider model identifier</span>
               <Input
                 required
+                placeholder="For example: qwen3:8b"
                 value={config.model}
                 onChange={(e) => update("model", e.target.value)}
               />
+              <small>
+                The exact model name accepted by your provider, separate from
+                the display name.
+              </small>
             </label>
             <label className="field">
               <span>Endpoint base URL</span>
@@ -147,7 +225,8 @@ function RegistrationForm({
                 onChange={(e) => update("base_url", e.target.value || null)}
               />
               <small>
-                Credential-free HTTP(S) URL. Provider requests use the backend.
+                For local OpenAI-compatible Ollama: http://127.0.0.1:11434/v1.
+                Native Ollama uses the server root.
               </small>
             </label>
             <label className="field">
@@ -158,8 +237,8 @@ function RegistrationForm({
                 onChange={(e) => update("api_key_env", e.target.value || null)}
               />
               <small>
-                Enter a variable name. Configure its value in the server
-                environment.
+                Optional for local servers. Enter a variable name, not the key.
+                Set its value in the backend environment.
               </small>
             </label>
             <label className="field">
@@ -182,19 +261,66 @@ function RegistrationForm({
             <label className="field">
               <span>Executable</span>
               <Input
+                placeholder="For example: python"
                 value={config.executable ?? ""}
                 onChange={(e) => update("executable", e.target.value || null)}
               />
               <small>
-                Executable path; arguments are a separate JSON array.
+                Executable available to the backend, such as python or your
+                installed CLI's full path.
+              </small>
+            </label>
+            <label className="field">
+              <span>Script path (optional)</span>
+              <Input
+                placeholder="For example: C:/agents/my_agent.py"
+                value={script}
+                onChange={(e) => setScript(e.target.value)}
+              />
+              <small>
+                For a script-based harness. Passed as the first executable
+                argument.
               </small>
             </label>
             <label className="field">
               <span>Model flag</span>
               <Input
+                placeholder="For example: --model"
                 value={config.model_flag ?? ""}
                 onChange={(e) => update("model_flag", e.target.value || null)}
               />
+              <small>
+                For controlled comparisons. Native products use their own model
+                settings.
+              </small>
+            </label>
+            <label className="field">
+              <span>Model endpoint environment variable</span>
+              <Input
+                placeholder="For example: MODEL_BASE_URL"
+                value={config.model_base_url_env ?? ""}
+                onChange={(e) =>
+                  update("model_base_url_env", e.target.value || null)
+                }
+              />
+              <small>
+                Your harness reads the paired model's endpoint from this
+                variable.
+              </small>
+            </label>
+            <label className="field full">
+              <span>Model API key environment variable</span>
+              <Input
+                placeholder="For example: MODEL_API_KEY"
+                value={config.model_api_key_env ?? ""}
+                onChange={(e) =>
+                  update("model_api_key_env", e.target.value || null)
+                }
+              />
+              <small>
+                Your harness reads the paired model's API key from this
+                variable. Enter its name, never the secret value.
+              </small>
             </label>
             <label className="field full">
               <span>Environment allowlist</span>
@@ -218,62 +344,88 @@ function RegistrationForm({
                 checked={config.native}
                 onChange={(e) => update("native", e.target.checked)}
               />
-              <span>Native product mode</span>
+              <span>
+                <strong>Native product mode</strong>
+                <small>
+                  Use the installed product's own model and settings. Leave
+                  unchecked to pair a custom subprocess harness with a
+                  registered model.
+                </small>
+              </span>
             </label>
           </>
         )}
-        <label className="field full">
-          <span>Capabilities</span>
-          <Input
-            value={config.capabilities.join(", ")}
-            onChange={(e) =>
-              update(
-                "capabilities",
-                e.target.value
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-              )
-            }
-          />
-          <small>
-            Comma separated; declare only verified adapter capabilities.
-          </small>
-        </label>
-        <label className="field full">
-          <span>Description</span>
-          <textarea
-            rows={2}
-            value={config.description}
-            onChange={(e) => update("description", e.target.value)}
-          />
-        </label>
-        <label className="field full">
-          <span>Advanced configuration overrides (JSON)</span>
-          <textarea
-            rows={3}
-            placeholder={
-              kind === "models"
-                ? '{"input_cost_per_million": null, "output_cost_per_million": null}'
-                : '{"args": ["--json"], "description": "JSON protocol harness"}'
-            }
-            value={advanced}
-            onChange={(e) => setAdvanced(e.target.value)}
-          />
-          <small>
-            All schema fields are accepted; unknown fields are rejected by the
-            server.
-          </small>
-        </label>
-        <label className="check-row">
-          <input
-            type="checkbox"
-            checked={config.demo}
-            onChange={(e) => update("demo", e.target.checked)}
-          />
-          <span>Explicit demonstration configuration</span>
-        </label>
       </div>
+      <details className="details-disclosure">
+        <summary>Advanced configuration</summary>
+        <div className="form-grid">
+          {kind === "agents" ? (
+            <label className="field full">
+              <span>Additional arguments (JSON)</span>
+              <textarea
+                rows={2}
+                value={argumentsJson}
+                onChange={(e) => setArgumentsJson(e.target.value)}
+              />
+              <small>
+                An array such as ["--json"]. Arguments are passed directly
+                without a shell.
+              </small>
+            </label>
+          ) : null}
+          <label className="field full">
+            <span>Capabilities</span>
+            <Input
+              value={config.capabilities.join(", ")}
+              onChange={(e) =>
+                update(
+                  "capabilities",
+                  e.target.value
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                )
+              }
+            />
+            <small>
+              Comma separated; declare only verified adapter capabilities.
+            </small>
+          </label>
+          <label className="field full">
+            <span>Description</span>
+            <textarea
+              rows={2}
+              value={config.description}
+              onChange={(e) => update("description", e.target.value)}
+            />
+          </label>
+          <label className="field full">
+            <span>Advanced configuration overrides (JSON)</span>
+            <textarea
+              rows={3}
+              placeholder={
+                kind === "models"
+                  ? '{"input_cost_per_million": null, "output_cost_per_million": null}'
+                  : '{"args": ["--json"], "description": "Subprocess harness"}'
+              }
+              value={advanced}
+              onChange={(e) => setAdvanced(e.target.value)}
+            />
+            <small>
+              All schema fields are accepted; unknown fields are rejected by the
+              server.
+            </small>
+          </label>
+          <label className="check-row">
+            <input
+              type="checkbox"
+              checked={config.demo}
+              onChange={(e) => update("demo", e.target.checked)}
+            />
+            <span>Explicit demonstration configuration</span>
+          </label>
+        </div>
+      </details>
       {error ? (
         <p role="alert" className="notice error">
           {error}
@@ -286,10 +438,22 @@ function RegistrationForm({
     </form>
   );
 }
-function Probe({ kind, id }: { kind: string; id: string }) {
+function Probe({
+  kind,
+  id,
+  native = false,
+}: {
+  kind: string;
+  id: string;
+  native?: boolean;
+}) {
   const action = useAction<Compatibility>(`/${kind}/${id}/probe`);
   return (
     <div>
+      <p className="registration-note mb-4">
+        Configuration saved. Check compatibility before using it in an
+        experiment.
+      </p>
       <Button
         variant="outline"
         size="sm"
@@ -302,8 +466,45 @@ function Probe({ kind, id }: { kind: string; id: string }) {
       <ErrorState error={action.error} />
       {action.data ? (
         <div className="section-gap">
-          <Status value={action.data.compatible ? "completed" : "failed"} />
-          <JsonView value={action.data} />
+          <h3 className="text-sm">
+            {action.data.compatible
+              ? "Compatibility confirmed"
+              : "Compatibility check failed"}
+          </h3>
+          {action.data.reasons.map((reason, i) => (
+            <p className="registration-note mt-2" key={i}>
+              {reason}
+            </p>
+          ))}
+          {action.data.warnings.map((warning, i) => (
+            <p className="registration-note mt-2" key={i}>
+              {warning}
+            </p>
+          ))}
+          {!action.data.compatible ? (
+            <Link href="/docs#troubleshooting" className="subtle-link mt-3">
+              Troubleshoot this connection →
+            </Link>
+          ) : (
+            <div className="registration-next">
+              <Link
+                href={`/experiments/new?${kind === "models" ? "model" : "agent"}=${id}${native ? "&mode=native" : ""}`}
+                className="subtle-link"
+              >
+                Build an experiment with this{" "}
+                {kind === "models" ? "model" : "agent"} →
+              </Link>
+              {kind === "models" ? (
+                <Link href="/agents" className="subtle-link">
+                  Or register an agent to compare harnesses →
+                </Link>
+              ) : null}
+            </div>
+          )}
+          <details className="details-disclosure">
+            <summary>Technical probe evidence</summary>
+            <JsonView value={action.data} />
+          </details>
         </div>
       ) : null}
     </div>
@@ -350,7 +551,14 @@ export function Registry({ kind }: { kind: "models" | "agents" }) {
                   environment variables.
                 </DialogDescription>
               </DialogHeader>
-              <RegistrationForm kind={kind} done={() => setOpen(false)} />
+              <RegistrationForm
+                kind={kind}
+                done={(id) => {
+                  setSelected(id);
+                  setSearch("");
+                  setOpen(false);
+                }}
+              />
             </DialogContent>
           </Dialog>
         }
@@ -427,7 +635,11 @@ export function Registry({ kind }: { kind: "models" | "agents" }) {
                     ? "No matching configurations"
                     : `No ${kind} registered`
                 }
-                description="Register an endpoint or execution harness to start evaluating."
+                description={
+                  kind === "models"
+                    ? "Use Register model to save your endpoint and model identifier, then probe the connection."
+                    : "Use Register agent to connect a subprocess harness or installed CLI. Model-only experiments can run without an agent."
+                }
                 demo={!search}
               />
             )}
@@ -438,9 +650,17 @@ export function Registry({ kind }: { kind: "models" | "agents" }) {
             {current ? (
               <>
                 <div className="panel-body">
-                  <Probe kind={kind} id={current.id} />
+                  <Probe
+                    key={current.id}
+                    kind={kind}
+                    id={current.id}
+                    native={"native" in current.config && current.config.native}
+                  />
                 </div>
-                <JsonView value={current.config} />
+                <details className="details-disclosure">
+                  <summary>Saved configuration (JSON)</summary>
+                  <JsonView value={current.config} />
+                </details>
                 <div className="panel-body">
                   <h3 className="text-sm mb-3">Execution history</h3>
                   {history.length ? (
@@ -461,7 +681,7 @@ export function Registry({ kind }: { kind: "models" | "agents" }) {
                   )}
                   <Link
                     className="subtle-link mt-4"
-                    href={`/experiments/new?${singular}=${current.id}`}
+                    href={`/experiments/new?${singular}=${current.id}${"native" in current.config && current.config.native ? "&mode=native" : ""}`}
                   >
                     Use in experiment →
                   </Link>

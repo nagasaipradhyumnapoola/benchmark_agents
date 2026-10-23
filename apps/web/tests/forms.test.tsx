@@ -62,6 +62,30 @@ describe("registration boundary validation", () => {
       }),
     ).toMatch(/names only/);
   });
+  it("rejects secret values in controlled agent model mappings", () => {
+    expect(
+      validateRegistration({
+        ...agentDefaults,
+        name: "Harness",
+        model_base_url_env: "https://provider.example",
+      }),
+    ).toMatch(/names only/);
+    expect(
+      validateRegistration({
+        ...agentDefaults,
+        name: "Harness",
+        model_api_key_env: "secret value",
+      }),
+    ).toMatch(/names only/);
+    expect(
+      validateRegistration({
+        ...agentDefaults,
+        name: "Harness",
+        model_base_url_env: "MODEL_BASE_URL",
+        model_api_key_env: "MODEL_API_KEY",
+      }),
+    ).toBeNull();
+  });
 });
 describe("experiment validation", () => {
   it("rejects no systems and incompatible task timeout budgets", () => {
@@ -104,6 +128,95 @@ describe("truthful evidence states", () => {
   });
 });
 describe("API-backed registration form", () => {
+  it("registers a script harness with model mappings, selects it and offers a checked next step", async () => {
+    let saved: Record<string, unknown> | null = null;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string, options?: RequestInit) => {
+        if (input.endsWith("/probe"))
+          return {
+            ok: true,
+            json: async () => ({
+              compatible: true,
+              reasons: [],
+              warnings: [],
+              capabilities: {},
+              requirements: [],
+            }),
+          };
+        if (options?.method === "POST") {
+          saved = JSON.parse(options.body as string);
+          return {
+            ok: true,
+            json: async () => ({ id: "agent-1", config: saved }),
+          };
+        }
+        return {
+          ok: true,
+          json: async () =>
+            input.endsWith("/runs")
+              ? []
+              : saved
+                ? [{ id: "agent-1", config: saved }]
+                : [],
+        };
+      }),
+    );
+    render(<Registry kind="agents" />, { wrapper });
+    await screen.findByText("No agents registered");
+    fireEvent.click(screen.getByRole("button", { name: "Register agent" }));
+    fireEvent.change(screen.getByLabelText("Display name"), {
+      target: { value: "Script harness" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Executable/), {
+      target: { value: "python" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Script path/), {
+      target: { value: "C:/agents/harness.py" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Model flag/), {
+      target: { value: "--model" },
+    });
+    fireEvent.change(
+      screen.getByLabelText(/^Model endpoint environment variable/),
+      { target: { value: "MODEL_BASE_URL" } },
+    );
+    fireEvent.change(
+      screen.getByLabelText(/^Model API key environment variable/),
+      { target: { value: "MODEL_API_KEY" } },
+    );
+    fireEvent.click(
+      screen.getByText("Advanced configuration", { selector: "summary" }),
+    );
+    fireEvent.change(screen.getByLabelText(/^Additional arguments/), {
+      target: { value: '["--json"]' },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Register configuration" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(saved).toMatchObject({
+      executable: "python",
+      args: ["C:/agents/harness.py", "--json"],
+      model_flag: "--model",
+      model_base_url_env: "MODEL_BASE_URL",
+      model_api_key_env: "MODEL_API_KEY",
+    });
+    expect(
+      await screen.findByText(/Configuration saved. Check compatibility/),
+    ).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Probe compatibility" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Compatibility confirmed" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: /Build an experiment with this agent/ }),
+    ).toHaveAttribute("href", "/experiments/new?agent=agent-1");
+  });
   it("searches persisted configurations and exposes a labelled registration dialog", async () => {
     vi.stubGlobal(
       "fetch",
@@ -135,6 +248,15 @@ describe("API-backed registration form", () => {
       "Register model configuration",
     );
     expect(screen.getByLabelText(/API key environment variable/)).toBeVisible();
+    expect(screen.getByLabelText(/^Endpoint base URL/)).toHaveValue(
+      "http://127.0.0.1:1234/v1",
+    );
+    fireEvent.change(screen.getByLabelText("Adapter"), {
+      target: { value: "ollama" },
+    });
+    expect(screen.getByLabelText(/^Endpoint base URL/)).toHaveValue(
+      "http://127.0.0.1:11434",
+    );
   });
   it("shows server validation errors instead of treating rejected input as success", async () => {
     vi.stubGlobal(

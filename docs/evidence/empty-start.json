@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "live_workspace": ".bench-agents",
+  "automatic_seeding": false,
+  "models": 0,
+  "agents": 0,
+  "experiments": 0,
+  "runs": 0,
+  "removed_legacy_sample_records": {
+    "model": 9,
+    "agent": 7,
+    "event": 5314,
+    "result": 1250,
+    "artifact": 1250,
+    "run": 159,
+    "experiment": 29
+  },
+  "real_user_records_removed": 0,
+  "benchmark_definitions_and_test_fixtures_retained": true
+}

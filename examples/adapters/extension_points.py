@@ -56,7 +56,10 @@ def register_examples(prefix="example"):
 
 async def main():
     register_examples()
-    lab = Laboratory(Path(".benchlab/extension-example"))
+    lab = Laboratory(Path(".bench-agents/extension-example"))
+    from benchlab.service import install_demo_inventory
+
+    install_demo_inventory(lab.store)
     result = await lab.run(
         ExperimentConfig(
             name="Trusted extension pipeline example",

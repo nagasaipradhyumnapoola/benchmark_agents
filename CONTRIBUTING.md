@@ -1,6 +1,6 @@
 # Contributing
 
-BenchLab is a development build. Read [architecture](docs/architecture.md), [contracts](docs/contracts.md), [methodology](docs/methodology.md) and [security model](SECURITY.md) before changing evaluation behavior.
+Bench Agents is a development build. Read [architecture](docs/architecture.md), [contracts](docs/contracts.md), [methodology](docs/methodology.md) and [security model](SECURITY.md) before changing evaluation behavior.
 
 1. Install Python 3.12, uv and Node 24 LTS. Clone this repository, run `uv sync --locked`, `npm ci --prefix apps/web` and `npm ci`.
 2. Create a branch. Write a failing behavior test, implement the change, then run `uv run pytest`, `uv run ruff check src tests examples`, `uv run mypy src/benchlab` and `npm test --prefix apps/web`.

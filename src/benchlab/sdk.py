@@ -21,8 +21,9 @@ class Laboratory:
         return await self.engine.execute(experiment["id"])
 
     async def demo(self) -> dict:
-        from benchlab.service import demo_config
+        from benchlab.service import demo_config, install_demo_inventory
 
+        install_demo_inventory(self.store)
         return await self.run(demo_config())
 
     def compare(self, *run_ids: str) -> dict:

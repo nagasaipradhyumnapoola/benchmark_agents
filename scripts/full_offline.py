@@ -11,7 +11,7 @@ from benchlab.store import Store
 
 
 async def main():
-    store = Store(Path(".benchlab/full-offline"))
+    store = Store(Path(".bench-agents/full-offline"))
     systems = []
     for variant in ["reference", "flawed"]:
         model = store.save_model(

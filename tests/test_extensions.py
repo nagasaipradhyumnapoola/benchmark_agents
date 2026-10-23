@@ -18,6 +18,9 @@ register_examples = example["register_examples"]
 async def test_registered_environment_verifier_exporter_run_in_shared_engine(tmp_path):
     register_examples("contract-test")
     lab = Laboratory(tmp_path)
+    from benchlab.service import install_demo_inventory
+
+    install_demo_inventory(lab.store)
     experiment = await lab.run(
         ExperimentConfig(
             name="extensions",

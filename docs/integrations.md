@@ -1,18 +1,18 @@
 # Integrations and measured support
 
-BenchLab's built-in experiment engine runs `starter-v1`: ten original Apache-2.0 public tasks. The default selection is eight text tasks. The ninth coding task (`coding-dedupe`) requires Docker; `workspace-normalize` is an explicitly selected filesystem task requiring the `workspace` capability. JSON tool-selection/recovery tasks measure a plan or state response, not actual live tool use. Public fixtures are not held-out or contamination-resistant intelligence benchmarks.
+Bench Agents's built-in experiment engine runs `starter-v1`: ten original Apache-2.0 public tasks. The default selection is eight text tasks. The ninth coding task (`coding-dedupe`) requires Docker; `workspace-normalize` is an explicitly selected filesystem task requiring the `workspace` capability. JSON tool-selection/recovery tasks measure a plan or state response, not actual live tool use. Public fixtures are not held-out or contamination-resistant intelligence benchmarks.
 
 ## Model providers
 
 Register `adapter: openai-compatible` with a credential-free `base_url` ending in `/v1`, a provider model ID and optional `api_key_env`. The adapter POSTs `/chat/completions`; it sends the prompt and supported sampling parameters, never verifier expected answers. Usage comes from the response. Cost is calculated only when both token counts and both configured token prices exist. Discovery probes `/models`; successful discovery does not prove generation or tool capabilities. Contract tests use HTTP MockTransport, not paid provider calls.
 
-Register `adapter: ollama` with `base_url: http://127.0.0.1:11434` and an already pulled model. The adapter calls `/api/chat` with `stream: false` and observes prompt/evaluation token counts. Download models explicitly using `ollama pull <model>`; BenchLab never starts downloads. See [Ollama API](https://docs.ollama.com/api).
+Register `adapter: ollama` with `base_url: http://127.0.0.1:11434` and an already pulled model. The adapter calls `/api/chat` with `stream: false` and observes prompt/evaluation token counts. Download models explicitly using `ollama pull <model>`; Bench Agents never starts downloads. See [Ollama API](https://docs.ollama.com/api).
 
 ## Native agents and subprocesses
 
 `subprocess` executes a configured executable and argv directly with no shell, passes only the prompt on stdin, and uses stdout as the final response. `codex-cli` builds `codex exec --json --sandbox read-only --skip-git-repo-check [--model ID] PROMPT`; `opencode-cli` builds `opencode run --format json [--model provider/model] PROMPT`. Local `--help` for both installed products was checked on 2026-10-22. JSONL parsers retain final agent-message/text events. Native products remain separate experimental conditions; specifying a model does not establish control over the product's entire harness.
 
-Both the server environment `BENCHLAB_ALLOW_HOST_PROCESS=1` and experiment `allow_host_process: true` are mandatory. These are privileged host processes, not Docker sandboxes. Use a dedicated OS account/VM for untrusted agents. Child processes are killed on timeout/cancellation. The child environment contains basic process-path variables plus explicitly named `env_allowlist` values. HOME, USERPROFILE, CODEX_HOME and XDG_CONFIG_HOME point inside the fresh task workspace, so existing user profiles and auth files are not silently reused. Add necessary API-key *names* to the allowlist and prepare credentials explicitly. Never put secret values in args/configs. Prompt content is always one argument or stdin. Workspace changes emit actual file diffs; output snapshots reject symlinks and cap text sizes. Artifact snapshots are observations, not verifier evidence: the file-state verifier reads disk independently.
+Both the server environment `BENCH_AGENTS_ALLOW_HOST_PROCESS=1` and experiment `allow_host_process: true` are mandatory. These are privileged host processes, not Docker sandboxes. Use a dedicated OS account/VM for untrusted agents. Child processes are killed on timeout/cancellation. The child environment contains basic process-path variables plus explicitly named `env_allowlist` values. HOME, USERPROFILE, CODEX_HOME and XDG_CONFIG_HOME point inside the fresh task workspace, so existing user profiles and auth files are not silently reused. Add necessary API-key *names* to the allowlist and prepare credentials explicitly. Never put secret values in args/configs. Prompt content is always one argument or stdin. Workspace changes emit actual file diffs; output snapshots reject symlinks and cap text sizes. Artifact snapshots are observations, not verifier evidence: the file-state verifier reads disk independently.
 
 Codex/OpenCode executable discovery and CLI/parser contracts are tested. Credentialed end-to-end agent calls were not exercised; auth/provider availability remains user-specific. Official references: [Codex noninteractive](https://developers.openai.com/codex/noninteractive), [OpenCode CLI](https://opencode.ai/docs/cli/).
 
@@ -29,16 +29,16 @@ These are explicit optional Python workflows, not pretend benchmark choices in t
 Install Inspect with `uv sync --extra inspect`. Its [Task/Sample/generate/scorer/eval_async API](https://inspect.aisi.org.uk/tasks.html) executes two original starter prompts using upstream `match` scoring and writes genuine Inspect JSON logs. Real framework execution with its mockllm provider is tested and clearly demo-marked, with deliberately wrong responses receiving upstream zero scores. Example PowerShell:
 
 ```powershell
-$env:BENCHLAB_ALLOW_HOST_PROCESS='1'
-uv run python examples/adapters/frameworks.py inspect --model mockllm/model --output .benchlab/inspect-demo --allow-host-process
+$env:BENCH_AGENTS_ALLOW_HOST_PROCESS='1'
+uv run python examples/adapters/frameworks.py inspect --model mockllm/model --output .bench-agents/inspect-demo --allow-host-process
 # Replace mockllm/model with a configured Inspect provider/model for real evaluation.
 ```
 
 The [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) runner builds the current `lm-eval run` CLI with explicit model backend, model args, task names, output path, sample logs and optional limit. JSON result parser preserves metric values and task versions, rejects empty results and constrains returned artifact paths. Setup in a separate Python 3.12 environment: `uv pip install lm-eval`; confirm `lm-eval run --help`, then:
 
 ```powershell
-$env:BENCHLAB_ALLOW_HOST_PROCESS='1'
-uv run python examples/adapters/frameworks.py lm-eval --model hf --model-args pretrained=gpt2 --tasks hellaswag --limit 2 --output .benchlab/lm-eval-smoke --allow-host-process
+$env:BENCH_AGENTS_ALLOW_HOST_PROCESS='1'
+uv run python examples/adapters/frameworks.py lm-eval --model hf --model-args pretrained=gpt2 --tasks hellaswag --limit 2 --output .bench-agents/lm-eval-smoke --allow-host-process
 ```
 
 This path requires installed lm-eval backend dependencies, model weights, task datasets and enough RAM/VRAM for that model. Downloads/network are controlled by upstream libraries; sample limit 2 is a smoke test, not a valid published benchmark score. CLI argv/result contracts are tested; a full dataset/model run has not been exercised here. The lm-eval framework is MIT, Inspect MIT; dataset/model licenses remain independent. Review each selected dataset card and pin framework/model/dataset revisions for publication.

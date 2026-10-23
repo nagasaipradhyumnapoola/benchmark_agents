@@ -10,7 +10,9 @@ from benchlab.sandbox import _drain
 
 
 def _permission(allowed):
-    if not allowed or os.environ.get("BENCHLAB_ALLOW_HOST_PROCESS") != "1":
+    from benchlab.settings import environment_setting
+
+    if not allowed or environment_setting("ALLOW_HOST_PROCESS") != "1":
         raise PermissionError("Framework execution requires both host-process opt-ins")
 
 

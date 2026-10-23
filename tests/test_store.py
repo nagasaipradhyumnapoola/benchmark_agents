@@ -1,11 +1,14 @@
 import pytest
 
 from benchlab.schemas import ExperimentConfig, RunManifest, SystemSpec, TraceEvent
+from benchlab.service import install_demo_inventory
 from benchlab.store import Store
 
 
 def test_store_durable_seed_queue_events_artifacts(tmp_path):
     s = Store(tmp_path)
+    assert s.list_models() == []
+    install_demo_inventory(s)
     assert len(s.list_models()) == 2
     c = ExperimentConfig(name="test", systems=[SystemSpec(model_id="demo-reference")], demo=True)
     e = s.create_experiment(c)
@@ -38,6 +41,7 @@ def test_store_durable_seed_queue_events_artifacts(tmp_path):
 
 def test_history_identity_cannot_change(tmp_path):
     s = Store(tmp_path)
+    install_demo_inventory(s)
     c = ExperimentConfig(name="test", systems=[SystemSpec(model_id="demo-reference")])
     s.create_experiment(c)
     model = s.get_model("demo-reference")["config"]

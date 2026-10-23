@@ -32,7 +32,7 @@ export function Settings() {
     );
     const a = document.createElement("a");
     a.href = url;
-    a.download = "benchlab-imported-config.json";
+    a.download = "bench-agents-imported-config.json";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -89,10 +89,11 @@ export function Settings() {
                   once used by a run.
                 </p>
                 <p>
-                  CLI agents require <code>BENCHLAB_ALLOW_HOST_PROCESS=1</code>{" "}
-                  on the server and explicit experiment consent. Code
-                  verification requires the hardened Linux Docker sandbox. A
-                  missing daemon produces a clear validation failure.
+                  CLI agents require{" "}
+                  <code>BENCH_AGENTS_ALLOW_HOST_PROCESS=1</code> on the server
+                  and explicit experiment consent. Code verification requires
+                  the hardened Linux Docker sandbox. A missing daemon produces a
+                  clear validation failure.
                 </p>
                 <Link href="/docs#troubleshooting">
                   Troubleshooting and environment configuration →

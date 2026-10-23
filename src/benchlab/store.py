@@ -10,7 +10,7 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-from .schemas import AgentConfig, ModelConfig, new_id, utcnow
+from .schemas import new_id, utcnow
 from .settings import redact
 
 
@@ -22,23 +22,13 @@ class Store:
         self.workspaces_dir = self.data_dir / "workspaces"
         self.artifacts_dir.mkdir(exist_ok=True)
         self.workspaces_dir.mkdir(exist_ok=True)
-        self.db = self.data_dir / "benchlab.sqlite3"
+        self.db = self.data_dir / "bench-agents.sqlite3"
         with self._connect() as db:
             db.execute("PRAGMA journal_mode=WAL")
             db.execute(
                 "CREATE TABLE IF NOT EXISTS records(kind TEXT,id TEXT PRIMARY KEY,parent TEXT,payload TEXT NOT NULL)"
             )
             db.execute("CREATE INDEX IF NOT EXISTS records_kind_parent ON records(kind,parent)")
-        for id, variant in [("demo-reference", "reference"), ("demo-flawed", "flawed")]:
-            if not self._exists(id):
-                self.save_model(
-                    ModelConfig(
-                        id=id, name=f"Demo {variant}", adapter="demo", model=variant, demo=True
-                    )
-                )
-        for id in ["demo-agent", "demo-agent-flawed"]:
-            if not self._exists(id):
-                self.save_agent(AgentConfig(id=id, name=id, adapter="demo", demo=True))
 
     @contextmanager
     def _connect(self):

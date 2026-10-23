@@ -1,6 +1,6 @@
 # Third-party notices and provenance
 
-Original BenchLab code and original starter fixtures are Apache-2.0. No upstream benchmark dataset or engine implementation is copied into the starter pack.
+Original Bench Agents code and original starter fixtures are Apache-2.0. No upstream benchmark dataset or engine implementation is copied into the starter pack.
 
 - FastAPI, Pydantic, httpx, Typer, Next.js, React, Tailwind CSS, shadcn/ui, Radix, TanStack Query, Recharts, Playwright, Inspect AI and lm-evaluation-harness retain their upstream licenses. Their supported public interfaces are called rather than reimplemented.
 - shadcn components under `apps/web/src/components/ui/` were generated with the official CLI and remain derived from the MIT-licensed shadcn/ui project. Copyright (c) 2023 shadcn. The complete permission/warranty notice is preserved in [third_party/shadcn-ui-LICENSE.txt](third_party/shadcn-ui-LICENSE.txt).

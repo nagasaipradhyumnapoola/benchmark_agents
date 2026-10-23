@@ -33,6 +33,17 @@ function LiveRun({ run }: { run: Run }) {
         </div>
         <Status value={run.status} />
       </div>
+      {run.metrics?.total != null ? (
+        <p className="registration-note mt-3">
+          <strong>
+            {run.metrics.passed ?? 0} / {run.metrics.total} tasks passed
+            verification.
+          </strong>{" "}
+          {run.status === "completed"
+            ? "Run finished; completion alone does not mean every task passed."
+            : "Outcomes update as tasks finish."}
+        </p>
+      ) : null}
       <div className="metric-strip !my-4 !py-3">
         <div>
           <span>Tasks recorded</span>
@@ -120,15 +131,26 @@ function ExperimentDetail({ id }: { id: string }) {
                 data.runs.map((r) => <LiveRun key={r.id} run={r} />)
               ) : (
                 <Empty
-                  title="Queued for execution"
-                  description="The worker will create runs when it claims this experiment."
+                  title={
+                    active(data.status)
+                      ? "Queued for execution"
+                      : "No runs recorded"
+                  }
+                  description={
+                    active(data.status)
+                      ? "The worker will create runs when it claims this experiment."
+                      : "Execution stopped before any run was recorded. Review the configuration and service diagnostics before trying again."
+                  }
                   demo={false}
                 />
               )}
             </Panel>
             <div className="stack">
               <Panel title="Reproducibility configuration">
-                <JsonView value={data.config} />
+                <details className="details-disclosure">
+                  <summary>View immutable configuration</summary>
+                  <JsonView value={data.config} />
+                </details>
               </Panel>
               <Panel title="Export evidence">
                 <div className="panel-body flex gap-3 flex-wrap">

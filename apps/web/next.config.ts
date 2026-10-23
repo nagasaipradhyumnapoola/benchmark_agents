@@ -7,7 +7,7 @@ const config: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.BENCHLAB_API_URL || "http://127.0.0.1:8000"}/api/:path*`,
+        destination: `${process.env.BENCH_AGENTS_API_URL || process.env.BENCHLAB_API_URL || "http://127.0.0.1:8000"}/api/:path*`,
       },
     ];
   },

@@ -4,7 +4,13 @@ import json
 import os
 from urllib.parse import urlsplit
 
-names = ["BENCHLAB_MODEL_BASE_URL", "OPENAI_BASE_URL", "OLLAMA_HOST", "LITELLM_API_BASE"]
+names = [
+    "BENCH_AGENTS_MODEL_BASE_URL",
+    "BENCHLAB_MODEL_BASE_URL",
+    "OPENAI_BASE_URL",
+    "OLLAMA_HOST",
+    "LITELLM_API_BASE",
+]
 findings = []
 for name in names:
     value = os.environ.get(name)

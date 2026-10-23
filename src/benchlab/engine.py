@@ -228,7 +228,7 @@ class Engine:
             network=config.network,
             policy_scope="Resource/network limits apply to Docker verification; native agents are privileged host processes and provider HTTP is outside that container policy",
             runtime_versions={
-                name: version(name) for name in ["benchlab", "pydantic", "httpx", "fastapi"]
+                name: version(name) for name in ["bench-agents", "pydantic", "httpx", "fastapi"]
             },
             task_definition_sha256=hashlib.sha256(
                 json.dumps([t.model_dump(mode="json") for t in tasks], sort_keys=True).encode()

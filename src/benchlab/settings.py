@@ -9,6 +9,11 @@ from pathlib import Path
 from typing import Any
 
 
+def environment_setting(name: str, default: str | None = None) -> str | None:
+    """Canonical product settings retain compatibility with existing scripts."""
+    return os.environ.get("BENCH_AGENTS_" + name, os.environ.get("BENCHLAB_" + name, default))
+
+
 @dataclass(frozen=True)
 class Settings:
     data_dir: Path
@@ -19,8 +24,8 @@ class Settings:
     @classmethod
     def from_env(cls) -> Settings:
         return cls(
-            data_dir=Path(os.environ.get("BENCHLAB_DATA_DIR", ".benchlab")).resolve(),
-            allow_host_process=os.environ.get("BENCHLAB_ALLOW_HOST_PROCESS") == "1",
+            data_dir=Path(environment_setting("DATA_DIR") or ".bench-agents").resolve(),
+            allow_host_process=environment_setting("ALLOW_HOST_PROCESS") == "1",
         )
 
 

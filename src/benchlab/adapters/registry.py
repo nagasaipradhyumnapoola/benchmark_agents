@@ -14,7 +14,7 @@ import psutil
 
 from benchlab.sandbox import _drain
 from benchlab.schemas import AdapterOutput, CompatibilityResult, TraceEvent
-from benchlab.settings import redact
+from benchlab.settings import environment_setting, redact
 
 http_client = httpx.AsyncClient
 _MODEL_PLUGINS: dict[str, tuple[Any, Any]] = {}
@@ -94,7 +94,7 @@ async def terminate_tree(process):
 
 
 def host_allowed(config):
-    return config.allow_host_process and os.environ.get("BENCHLAB_ALLOW_HOST_PROCESS") == "1"
+    return config.allow_host_process and environment_setting("ALLOW_HOST_PROCESS") == "1"
 
 
 def process_environment(agent, workspace, model=None):
@@ -148,7 +148,7 @@ def validate_system_config(system, model, agent, config) -> CompatibilityResult:
     if agent and agent.adapter in {"subprocess", "codex-cli", "opencode-cli"}:
         if config.isolation != "workspace":
             reasons.append(
-                "Native host agents require isolation=workspace; host execution cannot claim Docker isolation"
+                "Host agents require isolation=workspace; host execution cannot claim Docker isolation"
             )
         if system.parameters:
             reasons.append(
@@ -175,10 +175,10 @@ def validate_system_config(system, model, agent, config) -> CompatibilityResult:
                 )
             else:
                 warnings.append(
-                    "Model name and configured environment bindings are forwarded; the native executable owns sampling and seed"
+                    "Model name and configured environment bindings are forwarded; the agent executable owns sampling and seed"
                 )
         warnings.append(
-            "Native product sampling and experiment seed are not controlled by this adapter"
+            "Agent-process sampling and experiment seed are not controlled by this adapter"
         )
     elif not agent and model and model.adapter in {"openai-compatible", "ollama"}:
         unsupported = set(system.parameters) - {"temperature", "top_p", "seed"}
@@ -362,7 +362,7 @@ async def execute_system(system, model, agent, task, workspace: Path, config, em
             raise ValueError(f"Unsupported agent adapter: {agent.adapter}")
         if not host_allowed(config):
             raise PermissionError(
-                "Native execution requires BENCHLAB_ALLOW_HOST_PROCESS=1 and allow_host_process=true"
+                "Native execution requires BENCH_AGENTS_ALLOW_HOST_PROCESS=1 and allow_host_process=true"
             )
         workspace.mkdir(parents=True, exist_ok=True)
         args = cli_argv(agent, model, task.prompt)
@@ -493,5 +493,5 @@ async def probe_agent(config):
         warnings=[
             "Executable discovery only; native host execution is privileged and requires two explicit opt-ins"
         ],
-        requirements=["BENCHLAB_ALLOW_HOST_PROCESS=1", "Experiment allow_host_process=true"],
+        requirements=["BENCH_AGENTS_ALLOW_HOST_PROCESS=1", "Experiment allow_host_process=true"],
     )

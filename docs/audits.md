@@ -6,11 +6,11 @@ This is the integration audit for the actual implementation, superseding interme
 
 | Check | Actual result | Evidence / reproduction |
 | --- | --- | --- |
-| Python suite including optional Inspect | 75 passed, 4 skipped; three upstream deprecation warnings | `uv run pytest --cov=benchlab --cov-report=json:docs/evidence/coverage.json`; 82% statement coverage |
-| Static Python checks | Ruff and mypy pass | `uv run ruff check src tests examples scripts`; `uv run mypy src/benchlab` (20 source files) |
-| Frontend components/forms/navigation | 12 passed | `npm test --prefix apps/web` |
+| Python suite including optional Inspect | 88 passed, 4 skipped; three upstream deprecation warnings | `uv run pytest --cov=benchlab --cov-report=json:docs/evidence/coverage.json`; 83% statement coverage |
+| Static Python checks | Ruff and mypy pass | `uv run ruff check src tests examples scripts`; `uv run mypy src/benchlab` (22 source files) |
+| Frontend components/forms/navigation | 17 passed | `npm test --prefix apps/web` |
 | Frontend type/format/build | pass | `npm run typecheck --prefix apps/web`; `npm run format:check --prefix apps/web`; `npm run build --prefix apps/web` |
-| Browser integration | 16 passed, 0 failures/skips/flakes | [browser-results.json](evidence/browser-results.json); real API on 8000 and production web on 3000 |
+| Browser integration | 18 passed, 0 failures/skips/flakes | [browser-results.json](evidence/browser-results.json); real API on 8000 and production web on 3000 |
 | Full host-safe deterministic suite | Reference 9/9, deliberately flawed 0/9 | [full-offline.json](evidence/full-offline.json); `uv run python scripts/full_offline.py` |
 | Two independent provider HTTP endpoints | pass | `tests/test_http_integration.py`: actual loopback HTTP requests, model/seed/usage, independent verification, persisted comparison |
 | Controlled agent pair | pass | Same test file: two real Python subprocess harnesses call the selected loopback endpoint through explicit model/URL bindings |
@@ -18,14 +18,16 @@ This is the integration audit for the actual implementation, superseding interme
 | lm-eval integration | CLI, subprocess-ingestion and result contracts pass using local fixtures | Full upstream dataset/model execution not run; no upstream score claimed |
 | Python packaging | sdist and wheel build | `uv build` |
 | Isolated wheel installation | pass | New venv; import from site-packages; SDK demo; installed CLI; API on 8001; four exports; [fresh-install.json](evidence/fresh-install.json) |
-| Clean web installation | pass | Disposable `.benchlab/fresh-web`, copied source/lockfiles, `npm ci --ignore-scripts`, production build, standalone startup on 3001, `/api/health` proxy response |
-| One-command startup | pass | [cli-ui.json](evidence/cli-ui.json); actual `benchlab ui` launches API and built dashboard through Node, no cmd shell; browser E2E runs against this startup |
+| Clean web installation | pass | Disposable `.bench-agents/fresh-web`, copied source/lockfiles, `npm ci --ignore-scripts`, production build, standalone startup on 3001, `/api/health` proxy response |
+| One-command startup | pass | [cli-ui.json](evidence/cli-ui.json); actual `bench-agents ui` launches API and built dashboard through Node, no cmd shell; browser E2E runs against this startup |
 | Dependency audits | no known vulnerabilities reported in tested runtime set | [python-audit.json](evidence/python-audit.json), [web-audit.json](evidence/web-audit.json), [browser-dependency-audit.json](evidence/browser-dependency-audit.json) |
 | Docker configuration | Compose validates | `docker compose config --quiet`; no Docker socket mount |
 | Docker runtime / container image build | **BLOCKED** | Desktop Inference-manager socket startup error; four explicit opt-in runtime tests skipped, not passed |
 | Real-model smoke | **BLOCKED — endpoint unavailable** | [endpoint-status.json](evidence/endpoint-status.json); no weights loaded or paid provider substituted |
 
 Dependency audits are point-in-time checks, not guarantees. Upstream Starlette TestClient and Inspect retry API deprecations remain warnings rather than failures. Windows was exercised locally; Linux/macOS execution and hosted GitHub Actions results are not claimed. CI includes Linux/Windows backend jobs.
+
+The current refinement also verifies an empty default workspace ([empty-start.json](evidence/empty-start.json)), guided terminal registration → model/agent pairing → HTTP generation → independent verification → ZIP export (`tests/test_terminal_flow.py`), and the same complete user journey in the browser. The 18 browser checks ran against a separate fresh data directory. The default live workspace retains zero saved models, agents, experiments and runs; test fixtures remain confined to automated checks and explicit demonstrations. New validation regressions confirm that rejected credential-bearing URLs and unknown secret fields are not repeated in API error responses. A cp1252 regression covers redirected Windows terminal startup.
 
 ## Pass 1 — requirements traceability
 
@@ -55,7 +57,7 @@ Dependency audits are point-in-time checks, not guarantees. Upstream Starlette T
 | 14–16: CLI/SDK/REST, maintainable monorepo, original task collection | CLI tests, fresh install, interfaces docs, starter and framework tests | Shared engine/storage; 10 original public fixtures (8 default text, 1 filesystem, 1 Docker). No fabricated upstream/real scores |
 | 17: automated tests/browser/quality | evidence ledger above | Local tests/checks pass; four real Docker cases are skipped explicitly |
 | 18: five reviews | this document, screenshots and fresh-install evidence | Separate requirement/correctness/security/UI/install passes performed. Independent backend review reproduced issues and fixes; reviewer account usage limit prevented full independent approval. No such approval is claimed |
-| 19: open-source readiness | Apache LICENSE, NOTICE and retained shadcn MIT notice, contributor/security/changelog/templates/CI | Prepared and pushed to authorized branch; no tagged V1.0/publication/merge claimed |
+| 19: open-source readiness | Apache LICENSE, NOTICE and retained shadcn MIT notice, contributor/security/changelog/templates/CI | Prepared for the authorized main-branch consolidation; no tagged V1.0 or package publication claimed |
 | 20–23: build strategy, prohibitions, acceptance and handoff | runnable app/evidence, this ledger, setup commands | Implemented and verified within available resources; V1.0 remains blocked by the external runtime/endpoint gates and native-product credentialed verification |
 
 ## Pass 2 — benchmark correctness
@@ -74,25 +76,27 @@ API Host/Origin checks and loopback defaults, environment-name credentials, best
 
 Inspected actual desktop overview/comparison/replay and 390px loaded overview screenshots. An initial mobile screenshot captured loading skeletons; screenshot capture now waits for persisted experiment content. Internal scrolling preserves legible technical tables. Fixed keyboard focus for JSON/text evidence, preserved dark contrast and native text, and added real category comparisons. E2E covers first-run instructions, demo, model/agent forms, benchmark/builder, execution/cancel/failure, compare, replay tabs/filters, ablation, exports, persisted refresh, settings import, mobile sheet and error/empty states. Axe reports no violations in the three tested major workflows; it does not prove every accessibility criterion.
 
+The refined website uses a quieter typographic Bench Agents identity, ruled sections, actual inventory counts, clear setup ordering, optional agent pairing and a single-task first test. Technical JSON sits behind details disclosures. Saving a registration is distinguished from confirming compatibility; run completion is distinguished from passed-task count. Native agent links select native mode and hide shared endpoint pairing. Interaction references were the official [Inspect log viewer](https://inspect.aisi.org.uk/log-viewer.html) for sample drill-down and [Promptfoo getting started](https://www.promptfoo.dev/docs/getting-started/) for provider-to-evaluation flow. The original terminal banner uses bold block lettering with a muted gold accent, informed by the hierarchy in the official [Hermes startup banner](https://github.com/NousResearch/hermes-agent/blob/main/hermes_cli/banner.py); its code and artwork were not copied.
+
 ## Pass 5 — install/release
 
 Built wheel/sdist and installed the wheel into a new venv without source imports. Exercised SDK positive/negative demo, installed CLI shared state, four exports and a real temporary API process, then stopped that process. Copied web source and lockfiles to a disposable directory, resolved clean dependencies, built every route, started standalone server on 3001, verified the web/API proxy and stopped the temporary web server. The main local workspace remains available on 3000/8000. Windows build failure from a running standalone preview locking `.next/standalone` was resolved by stopping the owned preview before rebuilding.
 
-The Windows one-command launcher now resolves Node and the installed Next entry point directly, avoiding cmd launcher failures. At default API port 8000 it uses an existing production build; otherwise it starts dev mode. The custom-port dev API/proxy/demo passed, but the first cold page compile exceeded a 45-second request on this low-memory host. The built dashboard responds immediately and is used by the full browser suite. README installation now builds before `benchlab ui`. Build/dev/start scripts disable Next.js telemetry. Final focused API and CLI regressions also passed after list ordering and launcher fixes.
+The Windows one-command launcher now resolves Node and the installed Next entry point directly, avoiding cmd launcher failures. At default API port 8000 it uses an existing production build; otherwise it starts dev mode. The custom-port dev API/proxy/demo passed, but the first cold page compile exceeded a 45-second request on this low-memory host. The built dashboard responds immediately and is used by the full browser suite. README installation now builds before `bench-agents ui`. Build/dev/start scripts disable Next.js telemetry. Final focused API and CLI regressions also passed after list ordering and launcher fixes.
 
 ## Remaining gates and exact setup
 
-1. **Real-model smoke: BLOCKED — endpoint unavailable.** No 7B/14B weights were loaded. Supply an already authorized, affordable/local service. OpenAI-compatible base URL format: `http[s]://HOST:PORT/v1` (no embedded credentials/query); endpoints must implement `GET /models` with the exact ID in `data[].id` and `POST /chat/completions`. Set `ModelConfig.model` to that exact provider-advertised ID. The supplied config uses `api_key_env: BENCHLAB_PROVIDER_KEY`; set that variable only in the backend shell if authentication is required, or remove api_key_env for a credential-free local service. Edit `examples/openai-compatible-model.json`, then run:
+1. **Real-model smoke: BLOCKED — endpoint unavailable.** No 7B/14B weights were loaded. Supply an already authorized, affordable/local service. OpenAI-compatible base URL format: `http[s]://HOST:PORT/v1` (no embedded credentials/query); endpoints must implement `GET /models` with the exact ID in `data[].id` and `POST /chat/completions`. Set `ModelConfig.model` to that exact provider-advertised ID. The supplied config uses `api_key_env: BENCH_AGENTS_PROVIDER_KEY`; set that variable only in the backend shell if authentication is required, or remove api_key_env for a credential-free local service. Edit `examples/openai-compatible-model.json`, then run:
 
    ```powershell
-   uv run benchlab models add examples/openai-compatible-model.json
-   uv run benchlab models probe configured-endpoint
-   uv run benchlab run --model configured-endpoint --benchmark starter-v1 --trials 1 --name "Authorized real-model smoke"
+   uv run bench-agents models add examples/openai-compatible-model.json
+   uv run bench-agents models probe configured-endpoint
+   uv run bench-agents run --model configured-endpoint --benchmark starter-v1 --trials 1 --name "Authorized real-model smoke"
    ```
 
    Ollama format: base URL `http://127.0.0.1:11434`, exact pre-existing model name from `/api/tags`, optional api_key_env only if that endpoint actually requires it. Do not start or download a model without checking memory and authorization. The current template ID is deliberately a placeholder, not a claimed working model.
 
-2. **Docker runtime: BLOCKED.** Repair/start a supported Linux Docker daemon without resetting data. Explicitly review/pull `python:3.12.10-slim`; set `BENCHLAB_TEST_DOCKER=1` and run `uv run pytest tests/test_sandbox.py -q`. Then test image builds/Compose and coding verification. Keep the four runtime tests unpassed until they actually run.
+2. **Docker runtime: BLOCKED.** Repair/start a supported Linux Docker daemon without resetting data. Explicitly review/pull `python:3.12.10-slim`; set `BENCH_AGENTS_TEST_DOCKER=1` and run `uv run pytest tests/test_sandbox.py -q`. Then test image builds/Compose and coding verification. Keep the four runtime tests unpassed until they actually run.
 
 3. **Credentialed native products: UNVERIFIED.** Generic subprocess wire execution is verified. Codex/OpenCode discovery/argv/parsers are tested, but each product needs an explicit authorized provider and isolated profile. Preserve native vs controlled labeling and the dual host-process opt-in. No existing user login files are copied implicitly.
 

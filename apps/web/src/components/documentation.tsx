@@ -6,44 +6,74 @@ export function Documentation() {
     <>
       <PageTitle
         title="Documentation"
-        description="From the first offline run to reproducible evaluations of configured systems."
-        action={<DemoButton />}
+        description="Connect a model, run a small test, and understand the evidence."
       />
       <div className="split">
-        <Panel title="A practical guide to BenchLab">
+        <Panel title="A practical guide to Bench Agents">
           <article className="prose">
             <h2 id="first-run">Your first experiment</h2>
             <p>
-              BenchLab stores configurations, jobs, task results and events in
-              one local SQLite workspace. The browser, CLI and Python SDK share
-              that evidence. Start with the offline demonstration to exercise
-              execution and independent verification without credentials.
+              Bench Agents stores your model settings, experiments, results and
+              traces in one local SQLite workspace. The browser, terminal and
+              Python SDK share the same records. A new workspace starts empty.
             </p>
             <ol>
               <li>
-                Choose <strong>Run offline demonstration</strong>. The backend
-                queues reference and deliberately flawed deterministic adapters.
+                Open <Link href="/models">Model explorer</Link> and choose{" "}
+                <strong>Register model</strong>. Give the configuration a name,
+                enter your provider's exact model identifier and endpoint, and
+                save. Saving records settings; it does not confirm a working
+                connection.
               </li>
               <li>
-                Follow the experiment in{" "}
-                <Link href="/experiments">Live experiments</Link>. Completed
-                means orchestration finished; task success is reported
-                separately.
+                In the selected model's inspector, choose{" "}
+                <strong>Probe compatibility</strong>. Resolve any reported
+                issues before continuing.
               </li>
               <li>
-                Open each run in <Link href="/replay">Execution replay</Link> to
-                inspect the outputs and verifier evidence.
+                Choose <strong>Build an experiment with this model</strong>.
+                Name the experiment, keep model mode selected and choose{" "}
+                <strong>Use one quick text task</strong> for a small first test.
+                One trial is enough to check the setup.
               </li>
               <li>
-                Select both runs in{" "}
-                <Link href="/compare">Comparison studio</Link>. Demo results
-                validate the pipeline; they do not measure model intelligence.
+                Choose <strong>Validate compatibility</strong>, review any
+                issues, then <strong>Launch experiment</strong>. Follow the run
+                in <Link href="/experiments">Live experiments</Link>.
               </li>
               <li>
-                Download JSON, CSV, HTML or an evidence bundle from{" "}
+                Check the passed-task count. A completed run means execution
+                finished; each task still has an independent pass or failure.
+                Open <Link href="/replay">Execution replay</Link> for the output
+                and verification reason.
+              </li>
+              <li>
+                After a second run, use{" "}
+                <Link href="/compare">Comparison studio</Link> to compare
+                outcomes. Export JSON, CSV, HTML or an evidence bundle in{" "}
                 <Link href="/reports">Reports</Link>.
               </li>
             </ol>
+            <p>
+              Agents are optional. Add one in{" "}
+              <Link href="/agents">Agent explorer</Link> when you want to
+              compare execution harnesses with a shared model, or evaluate an
+              installed product in native mode.
+            </p>
+            <h2 id="terminal">Use the terminal interface</h2>
+            <p>
+              From the repository directory, open the interactive workspace. Use
+              its menus to browse models and agents, run an experiment, inspect
+              results or compare runs.
+            </p>
+            <pre>
+              <code>uv run bench-agents terminal</code>
+            </pre>
+            <p>
+              The terminal and website use the same local workspace by default.
+              If you choose a custom data directory, configure both interfaces
+              to use it.
+            </p>
             <h2 id="models">Configure a real model</h2>
             <p>
               Register an <code>openai-compatible</code> endpoint for OpenAI,
@@ -68,21 +98,26 @@ export function Documentation() {
             <h2 id="agents">Configure an agent</h2>
             <p>
               The <code>subprocess</code> adapter launches a configured
-              executable with a JSON request on stdin and expects a JSON
-              response on stdout. Arguments remain an array, never a shell
-              command. Environment variables are passed only by an explicit
-              allowlist. The <code>codex-cli</code> and{" "}
-              <code>opencode-cli</code> registrations are experimental bridges;
-              probe the actual installed executable and do not assume every
-              release is compatible.
+              executable, sends the task prompt as plain text on stdin, and
+              reads the final response as plain text from stdout. Arguments
+              remain an array, never a shell command. Environment variables are
+              passed only by an explicit allowlist. The <code>codex-cli</code>{" "}
+              and <code>opencode-cli</code> registrations are experimental
+              bridges; probe the actual installed executable and do not assume
+              every release is compatible. For Python harnesses, enter python as
+              the executable and the full script path in Script path. Additional
+              arguments are available under Advanced configuration.
             </p>
             <p>
               Host execution needs two deliberate settings: enable{" "}
-              <code>BENCHLAB_ALLOW_HOST_PROCESS=1</code> in the server
+              <code>BENCH_AGENTS_ALLOW_HOST_PROCESS=1</code> in the server
               environment and check experiment host-process authorization in the
               builder. Controlled agent comparisons use the same registered
-              model. Native products retain their own conditions and must be
-              evaluated in native mode.
+              model. Set Model flag to the argument your harness accepts, and
+              enter the environment variable names it uses for the model
+              endpoint and API key. The selected model supplies those values at
+              execution time. Native products retain their own conditions and
+              must be evaluated in native mode.
             </p>
             <h2 id="benchmark">Build and launch an experiment</h2>
             <p>
@@ -173,6 +208,15 @@ export function Documentation() {
                 unavailable.
               </li>
             </ul>
+            <h2 id="demonstration">Optional offline demonstration</h2>
+            <p>
+              If you want to check the pipeline without a model provider,
+              explicitly launch the offline demonstration below. It creates
+              reference and deliberately flawed deterministic adapters and
+              clearly marks their results as demonstration evidence. These
+              results do not measure model intelligence.
+            </p>
+            <DemoButton />
             <h2 id="api">API and local tools</h2>
             <p>
               The backend exposes its interactive OpenAPI reference at{" "}
@@ -197,6 +241,7 @@ export function Documentation() {
             >
               {[
                 ["first-run", "First experiment"],
+                ["terminal", "Terminal interface"],
                 ["models", "Configure a model"],
                 ["agents", "Configure an agent"],
                 ["benchmark", "Build and launch"],
@@ -204,6 +249,7 @@ export function Documentation() {
                 ["external", "External integrations"],
                 ["adapter", "Build an adapter"],
                 ["troubleshooting", "Troubleshooting"],
+                ["demonstration", "Offline demonstration"],
                 ["api", "API and tools"],
               ].map(([id, label]) => (
                 <a className="subtle-link" href={`#${id}`} key={id}>

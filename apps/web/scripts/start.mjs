@@ -11,6 +11,6 @@ cpSync(resolve(root, '.next/static'), resolve(standalone, '.next/static'), { rec
 if (existsSync(resolve(root, 'public'))) {
   cpSync(resolve(root, 'public'), resolve(standalone, 'public'), { recursive: true });
 }
-process.env.HOSTNAME = process.env.BENCHLAB_WEB_HOST || '127.0.0.1';
+process.env.HOSTNAME = process.env.BENCH_AGENTS_WEB_HOST || process.env.BENCHLAB_WEB_HOST || '127.0.0.1';
 process.env.NEXT_TELEMETRY_DISABLED = '1';
 await import(pathToFileURL(resolve(standalone, 'server.js')).href);

@@ -12,10 +12,11 @@ def client(tmp_path):
         yield client
 
 
-def test_health_and_seeded_inventory(client):
+def test_health_and_empty_inventory(client):
     assert client.get("/api/health").json()["status"] == "ok"
     models = client.get("/api/models").json()
-    assert {model["id"] for model in models} >= {"demo-reference", "demo-flawed"}
+    assert models == []
+    assert client.get("/api/agents").json() == []
 
 
 def test_foreign_origins_and_hosts_cannot_read_or_modify_local_lab(client):
@@ -66,6 +67,24 @@ def test_model_registration_never_accepts_inline_credentials(client):
         },
     )
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize("path", ["/api/models", "/api/import"])
+def test_schema_errors_do_not_repeat_submitted_secret_values(client, path):
+    secret = "accidental-private-credential-value"
+    payload = (
+        {
+            "name": "x",
+            "model": "x",
+            "adapter": "openai-compatible",
+            "base_url": f"https://user:{secret}@localhost/v1",
+        }
+        if path == "/api/models"
+        else {"name": "x", "systems": [{"model_id": "x"}], "api_key": secret}
+    )
+    response = client.post(path, json=payload)
+    assert response.status_code == 422
+    assert secret not in response.text
 
 
 def test_host_execution_requires_server_authorization(client):

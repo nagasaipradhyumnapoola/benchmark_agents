@@ -325,33 +325,39 @@ export function Comparison() {
               </div>
             </Panel>
           </div>
-          <div className="two-col section-gap">
-            <Panel
-              title="Paired improvement / regression"
-              detail="Exploratory task analysis; no multiple-comparison correction"
-            >
-              <JsonView value={query.data.paired_differences} />
-            </Panel>
-            <Panel
-              title="Conditions and Pareto analysis"
-              detail="Pareto set requires known calculated cost and observed latency"
-            >
-              <JsonView
-                value={{
-                  changes: query.data.changes,
-                  pareto: query.data.pareto,
-                }}
-              />
-            </Panel>
-          </div>
-          <div className="section-gap">
-            <Panel
-              title="Baseline-linked ablation evidence"
-              detail="Observed intervention effects; treatment differences remain explicit"
-            >
-              <JsonView value={query.data.ablation_analysis ?? []} />
-            </Panel>
-          </div>
+          <details className="details-disclosure">
+            <summary>
+              Advanced comparison evidence: paired analysis, conditions and
+              ablations
+            </summary>
+            <div className="two-col section-gap">
+              <Panel
+                title="Paired improvement / regression"
+                detail="Exploratory task analysis; no multiple-comparison correction"
+              >
+                <JsonView value={query.data.paired_differences} />
+              </Panel>
+              <Panel
+                title="Conditions and Pareto analysis"
+                detail="Pareto set requires known calculated cost and observed latency"
+              >
+                <JsonView
+                  value={{
+                    changes: query.data.changes,
+                    pareto: query.data.pareto,
+                  }}
+                />
+              </Panel>
+            </div>
+            <div className="section-gap">
+              <Panel
+                title="Baseline-linked ablation evidence"
+                detail="Observed intervention effects; treatment differences remain explicit"
+              >
+                <JsonView value={query.data.ablation_analysis ?? []} />
+              </Panel>
+            </div>
+          </details>
           <div className="mt-5 flex gap-5">
             {query.data.runs.map((r) => (
               <Link

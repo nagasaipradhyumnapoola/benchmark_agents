@@ -5,9 +5,9 @@ import { Providers } from "@/components/providers";
 import { Workspace } from "@/components/workspace";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "BenchLab — Experimental systems laboratory",
+  title: "Bench Agents — Local benchmarking workspace",
   description:
-    "Local-first AI benchmarking with independently verified evidence.",
+    "Benchmark models and agents in a local workspace with independently verified execution evidence.",
 };
 export default function RootLayout({
   children,

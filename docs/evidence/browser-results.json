@@ -106,17 +106,26 @@
         {
           "title": "Real backend research workflow",
           "file": "laboratory.spec.ts",
-          "line": 13,
+          "line": 19,
           "column": 6,
           "specs": [
             {
-              "title": "first-run guide explains demonstration, real systems and limitations",
+              "title": "fresh workspace starts empty with understandable next steps",
               "ok": true,
               "tags": [],
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -125,13 +134,74 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2107,
+                      "duration": 1648,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:18.977Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:14.963Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "37f1e2d4b3fc52152e51-9c8d92310bce0d04cd4c",
+              "file": "laboratory.spec.ts",
+              "line": 36,
+              "column": 7
+            },
+            {
+              "title": "first-run guide explains demonstration, real systems and limitations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1605,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-23T03:41:18.293Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -140,7 +210,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-6e6a73f3473d0ff68140",
               "file": "laboratory.spec.ts",
-              "line": 22,
+              "line": 48,
               "column": 7
             },
             {
@@ -150,7 +220,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -159,13 +238,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6031,
+                      "duration": 4265,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:24.822Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:19.914Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -174,7 +262,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-107ffaa95570d380b946",
               "file": "laboratory.spec.ts",
-              "line": 30,
+              "line": 56,
               "column": 7
             },
             {
@@ -184,7 +272,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -193,13 +290,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1147,
+                      "duration": 1250,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:30.879Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:24.202Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -208,7 +314,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-b85b24755b87234e7a05",
               "file": "laboratory.spec.ts",
-              "line": 46,
+              "line": 72,
               "column": 7
             },
             {
@@ -218,7 +324,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -227,13 +342,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1586,
+                      "duration": 1749,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:32.048Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:25.476Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -242,7 +366,59 @@
               ],
               "id": "37f1e2d4b3fc52152e51-a28de97f1328bd14bdfb",
               "file": "laboratory.spec.ts",
-              "line": 53,
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "a user connects an endpoint and agent then verifies and exports a real HTTP-backed run",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6000,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-23T03:41:27.241Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "37f1e2d4b3fc52152e51-cecf2d41b957d1a7ebb5",
+              "file": "laboratory.spec.ts",
+              "line": 97,
               "column": 7
             },
             {
@@ -252,7 +428,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -261,13 +446,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1316,
+                      "duration": 1328,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:33.655Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:33.262Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -276,7 +470,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-2305cf40611ee4854751",
               "file": "laboratory.spec.ts",
-              "line": 71,
+              "line": 152,
               "column": 7
             },
             {
@@ -286,7 +480,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -295,13 +498,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1171,
+                      "duration": 1193,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:34.996Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:34.608Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -310,7 +522,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-3fbe722e2bb592c35e8d",
               "file": "laboratory.spec.ts",
-              "line": 83,
+              "line": 165,
               "column": 7
             },
             {
@@ -320,7 +532,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -329,13 +550,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2482,
+                      "duration": 2012,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:36.188Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:35.815Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -344,7 +574,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-6b1b2f3ed6267215dc4e",
               "file": "laboratory.spec.ts",
-              "line": 91,
+              "line": 173,
               "column": 7
             },
             {
@@ -354,7 +584,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -363,13 +602,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 4524,
+                      "duration": 3433,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:38.696Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:37.843Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -378,7 +626,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-34cc198203ace800cb24",
               "file": "laboratory.spec.ts",
-              "line": 103,
+              "line": 185,
               "column": 7
             },
             {
@@ -388,7 +636,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -397,13 +654,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2503,
+                      "duration": 1406,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:43.250Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:41.290Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -412,7 +678,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-1317e20b5a579d10fa8e",
               "file": "laboratory.spec.ts",
-              "line": 116,
+              "line": 198,
               "column": 7
             },
             {
@@ -422,7 +688,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -431,13 +706,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1957,
+                      "duration": 1627,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:45.773Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:42.715Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -446,7 +730,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-310b7c48d0a575ee8b95",
               "file": "laboratory.spec.ts",
-              "line": 124,
+              "line": 206,
               "column": 7
             },
             {
@@ -456,7 +740,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -465,13 +758,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3639,
+                      "duration": 2745,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:47.748Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:44.358Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -480,7 +782,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-55aa28971a72cf85010d",
               "file": "laboratory.spec.ts",
-              "line": 140,
+              "line": 222,
               "column": 7
             },
             {
@@ -490,7 +792,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -499,13 +810,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5616,
+                      "duration": 5869,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:51.416Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:47.117Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -514,7 +834,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-3836fd7a788d23ad52a7",
               "file": "laboratory.spec.ts",
-              "line": 152,
+              "line": 234,
               "column": 7
             },
             {
@@ -524,7 +844,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -533,13 +862,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1978,
+                      "duration": 1486,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:57.060Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:53.005Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -548,7 +886,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-3c25b4e2d89192ca6c95",
               "file": "laboratory.spec.ts",
-              "line": 166,
+              "line": 248,
               "column": 7
             },
             {
@@ -558,7 +896,16 @@
               "tests": [
                 {
                   "timeout": 45000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -567,13 +914,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2993,
+                      "duration": 2821,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:39:59.058Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:54.511Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -582,7 +938,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-639e71393070261651f3",
               "file": "laboratory.spec.ts",
-              "line": 176,
+              "line": 258,
               "column": 7
             },
             {
@@ -592,7 +948,16 @@
               "tests": [
                 {
                   "timeout": 180000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -601,13 +966,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 34318,
+                      "duration": 17550,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:40:02.077Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:41:57.352Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -616,7 +990,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-ec36b160692a38b6bc3f",
               "file": "laboratory.spec.ts",
-              "line": 184,
+              "line": 266,
               "column": 7
             },
             {
@@ -626,7 +1000,16 @@
               "tests": [
                 {
                   "timeout": 90000,
-                  "annotations": [],
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                        "line": 19,
+                        "column": 6
+                      }
+                    }
+                  ],
                   "expectedStatus": "passed",
                   "projectId": "",
                   "projectName": "",
@@ -635,13 +1018,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5919,
+                      "duration": 8173,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-10-22T19:40:36.414Z",
-                      "annotations": [],
+                      "startTime": "2026-10-23T03:42:14.933Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\agent beanchmarking\\tests\\e2e\\laboratory.spec.ts",
+                            "line": 19,
+                            "column": 6
+                          }
+                        }
+                      ],
                       "attachments": []
                     }
                   ],
@@ -650,7 +1042,7 @@
               ],
               "id": "37f1e2d4b3fc52152e51-8e76a5cffb3c958a784d",
               "file": "laboratory.spec.ts",
-              "line": 212,
+              "line": 294,
               "column": 7
             }
           ]
@@ -660,9 +1052,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-22T19:39:17.585Z",
-    "duration": 86042.302,
-    "expected": 16,
+    "startTime": "2026-10-23T03:41:14.001Z",
+    "duration": 72938.119,
+    "expected": 18,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

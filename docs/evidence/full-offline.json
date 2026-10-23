@@ -2,7 +2,7 @@
   "status": "passed",
   "demo": true,
   "meaning": "Execution-pipeline verification only, not model intelligence",
-  "experiment_id": "c5e0ceab-1b42-40ae-b606-245057bddf0f",
+  "experiment_id": "281b2883-d097-41d5-a16e-1daac2a6da4e",
   "runs": [
     {
       "system": "Full offline demo reference",

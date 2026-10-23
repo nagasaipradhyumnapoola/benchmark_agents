@@ -1,34 +1,36 @@
-# BenchLab
+# Bench Agents
 
 Run local experiments on AI models and agent harnesses, verify their outputs, and inspect the evidence behind each result.
 
-BenchLab combines a browser dashboard, command-line interface, REST API, and Python SDK over the same SQLite workspace. Compare configured systems, investigate failures, test configuration changes, and export results without a hosted BenchLab account.
+Bench Agents combines a browser dashboard, command-line interface, REST API, and Python SDK over the same SQLite workspace. Compare configured systems, investigate failures, test configuration changes, and export results without a hosted Bench Agents account.
 
 **Status: 0.1.0 development.** The offline workflow and local HTTP integration tests pass. Real-model generation, Docker execution, and credentialed native-agent runs still have verification gates. See [verification status](#verification-status).
 
-[Get started](#get-started) · [Model endpoints](#configure-a-model-endpoint) · [Agent harnesses](#evaluate-an-agent-harness) · [CLI and SDK](#use-the-cli-and-python-sdk) · [Development](#develop-and-test) · [Documentation](#documentation)
+[Get started](#get-started) · [Testing walkthrough](docs/testing.md) · [Model endpoints](#configure-a-model-endpoint) · [Agent harnesses](#evaluate-an-agent-harness) · [Development](#develop-and-test)
 
-![BenchLab dashboard showing labeled demonstration experiments](docs/evidence/overview-1440.png)
+![Bench Agents empty workspace and first-experiment guide](docs/evidence/empty-workspace-desktop.png)
 
-The screenshot contains demonstration results. These measure execution-pipeline behavior, not model intelligence. Explore the [comparison view](docs/evidence/comparison-desktop.png), [execution replay](docs/evidence/replay-desktop.png), and [mobile layout](docs/evidence/overview-390.png).
+Fresh workspaces contain no models, agents or results. Register your own systems when ready. The [comparison](docs/evidence/comparison-desktop.png) and [replay](docs/evidence/replay-desktop.png) screenshots use explicitly requested test fixtures; they demonstrate the pipeline and do not measure model intelligence.
 
 ## Get started
 
 Install [uv](https://docs.astral.sh/uv/) and use Python 3.12. The dashboard also requires Node.js 24 and npm. Docker is optional for the default text tasks; generated-code verification requires a functioning Linux Docker daemon.
 
-### Install and run the offline demonstration
+### Install and open the terminal
 
-These commands work in PowerShell and Bash. The implementation currently lives on `feat/benchlab-v1`:
+These commands work in PowerShell and Bash:
 
 ```shell
 git clone https://github.com/nagasaipradhyumnapoola/benchmark_agents.git
 cd benchmark_agents
-git switch feat/benchlab-v1
+git switch main
 uv sync --locked --python 3.12
-uv run benchlab demo
+uv run bench-agents terminal
 ```
 
-The demo runs deterministic reference and deliberately flawed systems through the engine and independent verifiers. It requires no model weights, API keys, Docker, or paid services. Installation needs network access for dependencies; the installed demo runs offline.
+The terminal opens with a bold Bench Agents banner and a guided menu. Connect an existing model endpoint, optionally connect an agent harness, then test one task or the eight default text tasks. Inspect failures, compare saved runs and export a ZIP evidence report from the menu. Node.js is needed only for the website. No inference server or model weights are started automatically.
+
+For a small first test: **Connect a model → Test a model → single reasoning task → review compatibility → confirm run → Inspect/export results**. Enter the exact provider model ID and the name of a credential environment variable when required. A saved configuration is not yet a verified connection. See the [step-by-step testing guide](docs/testing.md) for both terminal and browser workflows.
 
 ### Start the dashboard
 
@@ -37,12 +39,12 @@ Install and build the web application, then launch both services:
 ```shell
 npm ci --prefix apps/web
 npm run build --prefix apps/web
-uv run benchlab ui
+uv run bench-agents ui
 ```
 
 Open the [dashboard](http://127.0.0.1:3000) or [interactive API documentation](http://127.0.0.1:8000/docs). Stop a running web server before rebuilding its output directory.
 
-At API port 8000, `benchlab ui` uses the production build when available. Without a build, or with a custom API port, it starts the development server. Cold development compilation can be slow on machines with little available RAM. The web scripts disable Next.js telemetry.
+At API port 8000, `bench-agents ui` uses the production build when available. Without a build, or with a custom API port, it starts the development server. Cold development compilation can be slow on machines with little available RAM. The web scripts disable Next.js telemetry.
 
 To manage the services separately, run the backend in one terminal:
 
@@ -57,6 +59,16 @@ npm run start --prefix apps/web
 ```
 
 Use `npm run dev --prefix apps/web` when editing the frontend.
+
+### Verify the pipeline without a model
+
+Run the full deterministic offline audit in its separate test workspace:
+
+```shell
+uv run python scripts/full_offline.py
+```
+
+Expected: reference **9/9**, deliberate negative **0/9**, and the Docker-only coding task explicitly blocked. This checks execution and verification, not intelligence. It leaves the default live inventory empty. The optional `bench-agents demo` command and the demonstration button under website Documentation deliberately create labeled demo records in the selected workspace; neither runs on startup.
 
 ## Explore the workspace
 
@@ -79,7 +91,7 @@ The twelve dashboard screens read persisted backend records. Refreshing the brow
 
 ## Configure a model endpoint
 
-BenchLab connects to an existing endpoint. It does not download weights or start inference servers. Choose a model that fits available memory and your endpoint's authorization and cost constraints.
+Bench Agents connects to an existing endpoint. It does not download weights or start inference servers. Choose a model that fits available memory and your endpoint's authorization and cost constraints.
 
 ### OpenAI-compatible chat endpoints
 
@@ -92,7 +104,7 @@ Edit [examples/openai-compatible-model.json](examples/openai-compatible-model.js
   "adapter": "openai-compatible",
   "model": "replace_with_advertised_model_id",
   "base_url": "http://127.0.0.1:1234/v1",
-  "api_key_env": "BENCHLAB_PROVIDER_KEY",
+  "api_key_env": "BENCH_AGENTS_PROVIDER_KEY",
   "capabilities": ["text"],
   "demo": false
 }
@@ -100,14 +112,14 @@ Edit [examples/openai-compatible-model.json](examples/openai-compatible-model.js
 
 Set `base_url` to the server's API root, usually `http[s]://host:port/v1`. Use the exact model ID advertised by `GET /models`. Generation requests go to `/chat/completions` relative to the base URL.
 
-If authentication is required, set `BENCHLAB_PROVIDER_KEY` in the backend's environment using your credential-management method. The configuration stores the variable name. Remove `api_key_env` for a credential-free endpoint. Keep keys out of URLs, configuration values, descriptions, and frontend variables.
+If authentication is required, set `BENCH_AGENTS_PROVIDER_KEY` in the backend's environment using your credential-management method. The configuration stores the variable name. Remove `api_key_env` for a credential-free endpoint. Keep keys out of URLs, configuration values, descriptions, and frontend variables.
 
 Register, probe, and evaluate the endpoint:
 
 ```shell
-uv run benchlab models add examples/openai-compatible-model.json
-uv run benchlab models probe configured-endpoint
-uv run benchlab run --model configured-endpoint --trials 1
+uv run bench-agents models add examples/openai-compatible-model.json
+uv run bench-agents models probe configured-endpoint
+uv run bench-agents run --model configured-endpoint --trials 1
 ```
 
 A successful probe confirms discovery and the advertised ID. It does not prove generation, tool support, structured-output support, or the declared context size.
@@ -117,9 +129,9 @@ A successful probe confirms discovery and the advertised ID. It does not prove g
 Edit [examples/ollama-model.json](examples/ollama-model.json), replacing its placeholder with an already installed model name from the running server. The default base URL is `http://127.0.0.1:11434`; the adapter uses `/api/tags` and `/api/chat`.
 
 ```shell
-uv run benchlab models add examples/ollama-model.json
-uv run benchlab models probe local-ollama
-uv run benchlab run --model local-ollama --trials 1
+uv run bench-agents models add examples/ollama-model.json
+uv run bench-agents models probe local-ollama
+uv run bench-agents run --model local-ollama --trials 1
 ```
 
 See the [integration guide](docs/integrations.md) for provider contracts, resource requirements, and optional upstream frameworks.
@@ -130,19 +142,19 @@ The generic `subprocess` adapter passes prompts on stdin and reads final text fr
 
 Host agents run with the application's OS privileges. A fresh working directory and restricted environment do not create a filesystem or network sandbox. Both settings are required:
 
-- Backend environment: `BENCHLAB_ALLOW_HOST_PROCESS=1`
+- Backend environment: `BENCH_AGENTS_ALLOW_HOST_PROCESS=1`
 - Experiment configuration: `allow_host_process: true` and `isolation: workspace`
 
 For an explicitly configured, authorized Codex installation, the supplied example uses native mode:
 
 ```powershell
-$env:BENCHLAB_ALLOW_HOST_PROCESS = "1"
-uv run benchlab agents add examples/codex-agent.json
-uv run benchlab agents probe configured-codex
-uv run benchlab run --config examples/native-experiment.json
+$env:BENCH_AGENTS_ALLOW_HOST_PROCESS = "1"
+uv run bench-agents agents add examples/codex-agent.json
+uv run bench-agents agents probe configured-codex
+uv run bench-agents run --config examples/native-experiment.json
 ```
 
-Prepare the product's provider configuration explicitly. BenchLab does not copy existing CLI login profiles into task workspaces. Credentialed Codex/OpenCode execution remains unverified in the recorded audit.
+Prepare the product's provider configuration explicitly. Bench Agents does not copy existing CLI login profiles into task workspaces. Credentialed Codex/OpenCode execution remains unverified in the recorded audit.
 
 A controlled generic harness must bind the selected model name and endpoint through `model_flag` and `model_base_url_env`. Credentialed binding also requires `model_api_key_env`. Unsupported bindings and ignored native parameters fail preflight. See [configuration](docs/configuration.md) and the [one-request HTTP harness example](examples/adapters/minimal_chat_agent.py).
 
@@ -166,23 +178,24 @@ Public fixtures are not held out or contamination-resistant. Correlated tasks an
 
 ## Use the CLI and Python SDK
 
-The CLI emits JSON records and shares the API's store. `benchlab run` exits nonzero when tasks fail; `benchlab demo` retains deliberate failures while checking pipeline execution.
+The guided terminal uses readable tables and live progress. Scriptable commands emit JSON records and share the API's store. `bench-agents run` exits nonzero when tasks fail; `bench-agents demo` retains deliberate failures while checking pipeline execution. Python imports retain the `benchlab` namespace; the old `benchlab` command and `BENCHLAB_*` settings remain compatibility aliases. New configuration uses `bench-agents` and `BENCH_AGENTS_*`.
 
 | Command | Purpose |
 | --- | --- |
-| `benchlab doctor` | Inspect runtime and storage diagnostics |
-| `benchlab models list` / `benchlab agents list` | List registered systems |
-| `benchlab benchmarks list` | Inspect available packs |
-| `benchlab run --config experiment.json` | Validate and execute a JSON/TOML experiment |
-| `benchlab experiments list` | Find persisted experiment IDs |
-| `benchlab experiments show experiment_id` | Retrieve an experiment and its run IDs |
-| `benchlab compare run_a run_b` | Compare saved runs under checked conditions |
-| `benchlab report experiment_id --format zip --out evidence.zip` | Export records and evidence |
-| `benchlab cancel experiment_id` | Request persisted cancellation |
-| `benchlab worker` | Process the durable queue without the dashboard |
-| `benchlab ui --api-only` | Start the API without frontend source dependencies |
+| `bench-agents terminal` | Guided setup, model/agent runs, progress, results, ZIP export and comparison |
+| `bench-agents doctor` | Inspect runtime and storage diagnostics |
+| `bench-agents models list` / `bench-agents agents list` | List registered systems |
+| `bench-agents benchmarks list` | Inspect available packs |
+| `bench-agents run --config experiment.json` | Validate and execute a JSON/TOML experiment |
+| `bench-agents experiments list` | Find persisted experiment IDs |
+| `bench-agents experiments show experiment_id` | Retrieve an experiment and its run IDs |
+| `bench-agents compare run_a run_b` | Compare saved runs under checked conditions |
+| `bench-agents report experiment_id --format zip --out evidence.zip` | Export records and evidence |
+| `bench-agents cancel experiment_id` | Request persisted cancellation |
+| `bench-agents worker` | Process the durable queue without the dashboard |
+| `bench-agents ui --api-only` | Start the API without frontend source dependencies |
 
-Prefix commands with `uv run` in a source checkout. Replace `experiment_id`, `run_a`, and `run_b` with saved IDs. Run `uv run benchlab --help` or a subcommand's `--help` for its options.
+Prefix commands with `uv run` in a source checkout. Replace `experiment_id`, `run_a`, and `run_b` with saved IDs. Run `uv run bench-agents --help` or a subcommand's `--help` for its options.
 
 The SDK can run the credential-free demo, compare its systems, and export evidence:
 
@@ -224,7 +237,7 @@ flowchart LR
     Store --> Analysis[Comparison, replay, and reports]
 ```
 
-Storage defaults to `.benchlab/` in the working directory. Set `BENCHLAB_DATA_DIR` consistently across API, CLI, and workers to share another location. Use one worker daemon per data directory.
+Storage defaults to `.bench-agents/` in the working directory. Set `BENCH_AGENTS_DATA_DIR` consistently across API, CLI, and workers to share another location. Use one worker daemon per data directory.
 
 | Location | Contents |
 | --- | --- |
@@ -242,10 +255,10 @@ Version-1 contracts cover systems, tasks, environments, observations, verifiers,
 Keep the service local unless you add an authenticated deployment boundary. Documented defaults bind to loopback and check API Host and Origin headers.
 
 - Native executables and trusted Python plugins retain application privileges. Use an isolated OS account or VM for untrusted agents.
-- Generated Python requires Docker verification with no host mounts, restricted networking, a non-root user, read-only root filesystem, and resource/output limits. BenchLab does not fall back to host execution.
+- Generated Python requires Docker verification with no host mounts, restricted networking, a non-root user, read-only root filesystem, and resource/output limits. Bench Agents does not fall back to host execution.
 - Artifact collection checks path containment, rejects symlinks, and caps content sizes. Report generation escapes HTML and neutralizes spreadsheet formulas.
 - Credential redaction is best effort. Avoid sending private data or secrets to tasks, and review evidence before sharing it.
-- BenchLab does not automatically pull images, download model weights, or upload results. Configured providers receive the prompts you choose to send.
+- Bench Agents does not automatically pull images, download model weights, or upload results. Configured providers receive the prompts you choose to send.
 
 Docker is not an absolute security boundary. The [security policy](SECURITY.md) documents the threat model. The [Compose configuration](compose.yaml) omits the host Docker socket; coding verification needs a separately managed runtime.
 
@@ -255,10 +268,10 @@ The recorded local audit is dated **2026-10-23**. These are observed test result
 
 | Check | Recorded result |
 | --- | --- |
-| Backend suite with optional Inspect installed | 75 passed, 4 Docker runtime tests skipped |
-| Backend statement coverage | 82% |
-| Frontend component/form tests | 12 passed |
-| Browser tests against the actual API | 16 passed |
+| Backend suite with optional Inspect installed | 88 passed, 4 Docker runtime tests skipped |
+| Backend statement coverage | 83% |
+| Frontend component/form tests | 17 passed |
+| Browser tests against the actual API | 18 passed |
 | All host-safe offline fixtures | Reference 9/9; deliberate negative fixture 0/9 |
 | Local HTTP providers and controlled subprocess pair | Passed through the real request/execution pipeline |
 | Isolated wheel install and clean frontend install/build/start | Passed |
@@ -298,7 +311,7 @@ npm run typecheck --prefix apps/web
 npm run format:check --prefix apps/web
 ```
 
-With the API on port 8000 and dashboard on port 3000, install the browser-test dependencies and run Playwright:
+Browser tests deliberately register fixtures and run experiments. Use a **fresh separate data directory** for their API on port 8000, enable the test subprocess opt-in, and run the dashboard on 3000. Stop the usual API first; full instructions are in [Testing](docs/testing.md#automated-checks). Then install the browser-test dependencies and run Playwright:
 
 ```shell
 npm ci
@@ -313,6 +326,7 @@ Run `uv run python scripts/full_offline.py` to exercise every host-safe determin
 Use these references for details beyond installation:
 
 - [Architecture and contracts](docs/architecture.md)
+- [Testing walkthrough and expected outcomes](docs/testing.md)
 - [Configuration and credential handling](docs/configuration.md)
 - [CLI, REST, and SDK reference](docs/interfaces.md)
 - [Benchmark methodology](docs/methodology.md)
@@ -325,4 +339,4 @@ Use these references for details beyond installation:
 
 ## License
 
-Original BenchLab code and starter tasks use the [Apache-2.0 license](LICENSE). Dependencies, fonts, models, datasets, and external frameworks retain their own terms. Attribution and retained third-party notices are in [NOTICE.md](NOTICE.md) and [third_party/](third_party/).
+Original Bench Agents code and starter tasks use the [Apache-2.0 license](LICENSE). Dependencies, fonts, models, datasets, and external frameworks retain their own terms. Attribution and retained third-party notices are in [NOTICE.md](NOTICE.md) and [third_party/](third_party/).

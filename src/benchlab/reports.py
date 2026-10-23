@@ -31,7 +31,7 @@ def export_experiment(store, experiment_id, format):
             methodology="Independent deterministic verification; demo observations are pipeline tests, not intelligence measurements. Unavailable metrics are null. Wilson intervals assume independent tasks.",
         )
     )
-    name = f"benchlab-{experiment_id}"
+    name = f"bench-agents-{experiment_id}"
     from .plugins import _EXPORTERS
 
     if format in _EXPORTERS:
@@ -132,7 +132,7 @@ def export_experiment(store, experiment_id, format):
         return output.getvalue().encode("utf-8-sig"), "text/csv", name + ".csv"
     if format == "html":
         text = (
-            '<!doctype html><html lang="en"><meta charset="utf-8"><title>BenchLab report</title><body><h1>'
+            '<!doctype html><html lang="en"><meta charset="utf-8"><title>Bench Agents report</title><body><h1>'
             + html.escape(experiment["name"])
             + "</h1><p>"
             + (

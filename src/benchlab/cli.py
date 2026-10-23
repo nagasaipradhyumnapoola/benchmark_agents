@@ -16,7 +16,7 @@ from benchlab.settings import redact
 
 app = typer.Typer(
     no_args_is_help=True,
-    help="BenchLab — local-first AI experiments with independent verification.",
+    help="Bench Agents — local-first AI experiments with independent verification.",
 )
 models = typer.Typer(help="Register, inspect and probe model endpoints.")
 agents = typer.Typer(help="Register, inspect and probe agent executables.")
@@ -122,6 +122,14 @@ def experiment_show(experiment_id: str) -> None:
         )
     except KeyError as error:
         fail(error)
+
+
+@app.command()
+def terminal() -> None:
+    """Guided terminal: connect models/agents, validate, run and export real experiments."""
+    from benchlab.terminal import run_terminal
+
+    run_terminal(Laboratory())
 
 
 @app.command()
@@ -278,7 +286,7 @@ def ui(
         env = dict(
             os.environ,
             NEXT_PUBLIC_API_URL="/api",
-            BENCHLAB_API_URL=f"http://127.0.0.1:{port}",
+            BENCH_AGENTS_API_URL=f"http://127.0.0.1:{port}",
             NEXT_TELEMETRY_DISABLED="1",
         )
         start_script = web / "scripts" / "start.mjs"
