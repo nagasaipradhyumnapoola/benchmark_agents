@@ -1,0 +1,78 @@
+[
+  {
+    "cell": null,
+    "code": "S101",
+    "end_location": {
+      "column": 15,
+      "row": 387
+    },
+    "filename": "D:\\agent beanchmarking\\src\\benchlab\\adapters\\registry.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 387
+    },
+    "message": "Use of `assert` detected",
+    "name": "assert",
+    "noqa_row": 387,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/assert"
+  },
+  {
+    "cell": null,
+    "code": "S101",
+    "end_location": {
+      "column": 15,
+      "row": 16
+    },
+    "filename": "D:\\agent beanchmarking\\src\\benchlab\\analysis.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 16
+    },
+    "message": "Use of `assert` detected",
+    "name": "assert",
+    "noqa_row": 16,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/assert"
+  },
+  {
+    "cell": null,
+    "code": "S101",
+    "end_location": {
+      "column": 19,
+      "row": 257
+    },
+    "filename": "D:\\agent beanchmarking\\src\\benchlab\\engine.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 257
+    },
+    "message": "Use of `assert` detected",
+    "name": "assert",
+    "noqa_row": 257,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/assert"
+  },
+  {
+    "cell": null,
+    "code": "S101",
+    "end_location": {
+      "column": 11,
+      "row": 105
+    },
+    "filename": "D:\\agent beanchmarking\\src\\benchlab\\sandbox.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 105
+    },
+    "message": "Use of `assert` detected",
+    "name": "assert",
+    "noqa_row": 105,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/assert"
+  }
+]

@@ -132,11 +132,51 @@ beforeEach(() => {
               downloads: 0,
             },
           ],
-          total: 1,
+          total: params.includes("page=2") ? 57 : 1,
+          page: params.includes("page=2") ? 2 : 1,
+          page_size: 24,
+          pages: params.includes("page=2") ? 3 : 1,
         };
       return { ok: true, json: async () => data };
     }),
   );
+});
+
+it("restores filters from the URL and preserves them in page links", async () => {
+  params = "search=Text&model=provider%2Fexact&license=MIT&page=2";
+  render(<AgentHub />);
+  expect(await screen.findByLabelText("Search agents")).toHaveValue("Text");
+  expect(screen.getByLabelText("Filter by model")).toHaveValue(
+    "provider/exact",
+  );
+  expect(
+    await screen.findByRole("link", { name: "Next page" }),
+  ).toHaveAttribute(
+    "href",
+    "/hub?search=Text&model=provider%2Fexact&license=MIT&page=3",
+  );
+  expect(screen.getByRole("link", { name: "Previous" })).toHaveAttribute(
+    "href",
+    "/hub?search=Text&model=provider%2Fexact&license=MIT",
+  );
+  expect(
+    vi
+      .mocked(fetch)
+      .mock.calls.some(
+        ([path]) =>
+          String(path) ===
+          "/api/hub/agents?search=Text&model=provider%2Fexact&license=MIT&page=2",
+      ),
+  ).toBe(true);
+  fireEvent.change(screen.getByLabelText("Search agents"), {
+    target: { value: "new search" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Search registry" }));
+  expect(push).toHaveBeenLastCalledWith(
+    "/hub?search=new+search&model=provider%2Fexact&license=MIT",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+  expect(push).toHaveBeenLastCalledWith("/hub");
 });
 
 it("imports the inspected immutable release and links its saved registration to the experiment builder", async () => {
@@ -204,6 +244,11 @@ it("publishes source text with exact model suggestions and explicit runtime bind
   })) {
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
   }
+  fireEvent.click(
+    screen.getByRole("checkbox", {
+      name: /^I have reviewed the publication rules/,
+    }),
+  );
   fireEvent.click(screen.getByRole("button", { name: "Publish release" }));
   await waitFor(() =>
     expect(calls.some((call) => call.path === "/api/hub/agents")).toBe(true),
@@ -281,7 +326,7 @@ it("guides an unavailable registry to its actual start command", async () => {
   render(<AgentHub />);
   expect(
     await screen.findByRole("region", { name: "Hub start command" }),
-  ).toHaveTextContent("uv run bench-agents hub");
+  ).toHaveTextContent("uv run agent-hub hub");
   expect(
     screen.getByRole("button", { name: "Publish an agent" }),
   ).toBeDisabled();
@@ -300,6 +345,11 @@ it("requires a new immutable version and uses the owner release endpoint", async
   fireEvent.change(screen.getByLabelText("Version"), {
     target: { value: "1.1.0" },
   });
+  fireEvent.click(
+    screen.getByRole("checkbox", {
+      name: /^I have reviewed the publication rules/,
+    }),
+  );
   fireEvent.click(screen.getByRole("button", { name: "Publish release" }));
   await waitFor(() =>
     expect(calls).toContainEqual({
@@ -310,4 +360,24 @@ it("requires a new immutable version and uses the owner release endpoint", async
       },
     }),
   );
+});
+
+it("requires acknowledgement and links the publication rules before enabling publication", async () => {
+  user = { username: "developer" };
+  render(<AgentHub />);
+  const open = await screen.findByRole("button", { name: "Publish an agent" });
+  await waitFor(() => expect(open).toBeEnabled());
+  fireEvent.click(open);
+  expect(
+    screen.getByRole("button", { name: "Publish release" }),
+  ).toBeDisabled();
+  expect(
+    screen.getByRole("link", { name: "Read the publication rules" }),
+  ).toHaveAttribute("href", "/rules");
+  fireEvent.click(
+    screen.getByRole("checkbox", {
+      name: /^I have reviewed the publication rules/,
+    }),
+  );
+  expect(screen.getByRole("button", { name: "Publish release" })).toBeEnabled();
 });

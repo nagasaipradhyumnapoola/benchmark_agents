@@ -1,0 +1,25 @@
+┌──────────────────────────────────────┐
+│                                      │
+│  Agent Hub                           │
+│                                      │
+│  Agent Hub  /  0.1.0  /  Local       │
+│  evaluation workbench                │
+│                                      │
+└──────────────────────────────────────┘
+Workspace: D:\agent
+beanchmarking\.bench-agents\launch-audit
+\probes-zv028lp6\terminal-render
+Connect → test → inspect. Keys stay
+private to your local process.
+
+─ 0 models  ·  0 agents  ·  0 experim… ─
+
+  1     Connect a model
+  2     Connect an agent
+  3     Test models
+  4     Test model + agents
+  5     Test native agent
+  6     Inspect/export results
+  7     Compare saved runs
+  8     Test multiple models + agents
+  0     Exit

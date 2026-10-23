@@ -7,6 +7,7 @@
   "api_shared_storage": "passed",
   "community_catalog_packaged": "passed",
   "separate_hub_modules_packaged": "passed",
+  "agent_hub_cli_and_policy_module": "passed",
   "exports": [
     "json",
     "csv",

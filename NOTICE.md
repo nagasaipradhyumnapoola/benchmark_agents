@@ -9,3 +9,5 @@ Original Bench Agents code and original starter fixtures are Apache-2.0. No upst
 - Design/engineering skill collections are development guidance installed locally, not required application runtimes. Project-local Impeccable guidance is ignored by Git; its pinned source is recorded in `.agents/skill-sources.json`. This avoids incorrectly relicensing third-party skill content as application code.
 
 See lockfiles for exact application dependency versions and `docs/integrations.md` for upstream execution/resource boundaries. License metadata review is recorded as evidence; missing metadata must be resolved before redistributing an unfamiliar dependency or dataset. No blanket claim of legal compatibility is made for arbitrary user-installed plugins, models or data.
+
+The Agent Hub logo was supplied by the user and is retained unchanged. Its image rights are separate from the Apache-2.0 license covering original project code.

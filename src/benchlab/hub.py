@@ -15,6 +15,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from benchlab.hub_schemas import AgentRelease, AuthCredentials, CommentInput, ReportInput
 from benchlab.hub_store import HubError, HubStore
+from benchlab.policies import PUBLICATION_RULES_HEADER, PUBLICATION_RULES_VERSION
 
 MAX_REQUEST_BYTES = 2 * 1024 * 1024
 
@@ -178,6 +179,20 @@ def create_hub_app(data_dir: Path | None = None) -> FastAPI:
     def check_auth_attempt(request: Request) -> None:
         throttle.check(request.client.host if request.client else "unknown")
 
+    def acknowledged_rules(request: Request) -> str:
+        if request.headers.get(PUBLICATION_RULES_HEADER) != PUBLICATION_RULES_VERSION:
+            raise HTTPException(
+                428, "Review and acknowledge the current publication rules before publishing"
+            )
+        return PUBLICATION_RULES_VERSION
+
+    @app.get("/v1/policies")
+    def policies() -> dict:
+        return {
+            "publication_rules_version": PUBLICATION_RULES_VERSION,
+            "publication_acknowledgement_required": True,
+        }
+
     @app.get("/v1/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
@@ -206,14 +221,18 @@ def create_hub_app(data_dir: Path | None = None) -> FastAPI:
         search: Annotated[str, Query(max_length=200)] = "",
         model: Annotated[str, Query(max_length=200)] = "",
         license: Annotated[str, Query(max_length=100)] = "",
+        page: Annotated[int, Query(ge=1)] = 1,
+        page_size: Annotated[int, Query(ge=1, le=24)] = 24,
     ) -> dict[str, Any]:
-        return store.list_agents(search, model, license)
+        return store.list_agents(search, model, license, page=page, page_size=page_size)
 
     @app.post("/v1/agents", status_code=201)
     def publish(
-        release: AgentRelease, username: Annotated[str, Depends(authenticated)]
+        release: AgentRelease,
+        username: Annotated[str, Depends(authenticated)],
+        rules: Annotated[str, Depends(acknowledged_rules)],
     ) -> dict[str, Any]:
-        return store.publish(release, username)
+        return store.publish(release, username, rules_version=rules)
 
     @app.get("/v1/agents/{slug}")
     def agent(slug: str) -> dict[str, Any]:
@@ -221,9 +240,12 @@ def create_hub_app(data_dir: Path | None = None) -> FastAPI:
 
     @app.post("/v1/agents/{slug}/versions", status_code=201)
     def publish_version(
-        slug: str, release: AgentRelease, username: Annotated[str, Depends(authenticated)]
+        slug: str,
+        release: AgentRelease,
+        username: Annotated[str, Depends(authenticated)],
+        rules: Annotated[str, Depends(acknowledged_rules)],
     ) -> dict[str, Any]:
-        return store.publish(release, username, existing_slug=slug)
+        return store.publish(release, username, existing_slug=slug, rules_version=rules)
 
     @app.get("/v1/agents/{slug}/versions/{version}")
     def version(slug: str, version: str) -> dict[str, Any]:

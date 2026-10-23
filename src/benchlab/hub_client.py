@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from benchlab.hub_schemas import AgentRelease, ReportInput
 from benchlab.imports import install_release
+from benchlab.policies import PUBLICATION_RULES_HEADER
 from benchlab.settings import environment_setting
 
 COOKIE = "bench_agents_hub_session"
@@ -101,6 +102,8 @@ def create_hub_router(store, *, hub_url: str | None = None, transport=None) -> A
 
     async def call(method: str, path: str, request: Request, body=None, *, authentication=False):
         headers = {}
+        if request.headers.get(PUBLICATION_RULES_HEADER):
+            headers[PUBLICATION_RULES_HEADER] = request.headers[PUBLICATION_RULES_HEADER]
         token = request.cookies.get(COOKIE)
         if token:
             headers["Authorization"] = "Bearer " + token
@@ -134,6 +137,7 @@ def create_hub_router(store, *, hub_url: str | None = None, transport=None) -> A
                 409: "Username, agent slug or immutable version already exists",
                 422: "The registry rejected this input; check required fields and portable source paths",
                 429: "Too many attempts; wait before trying again",
+                428: "Review and acknowledge the current publication rules before publishing",
             }.get(status, "The registry request failed")
             if authentication:
                 detail = (

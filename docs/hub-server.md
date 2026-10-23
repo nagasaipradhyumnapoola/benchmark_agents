@@ -79,11 +79,12 @@ All routes begin with `/v1`:
 
 | Method / path | Result |
 | --- | --- |
+| `GET /policies` | Current publication rules version and acknowledgement requirement |
 | `GET /health` | `{status:"ok"}` |
 | `POST /auth/register`, `POST /auth/login` | Accept `{username,password}`; return `{token,user:{username}}` |
 | `GET /auth/me` | Bearer authentication; `{user:{username}}` |
 | `POST /auth/logout` | Bearer authentication; revokes the session and returns `{status:"ok"}` |
-| `GET /agents?search=&model=&license=` | `{items:[...],total}`; model/license filters match exact values; text search includes slug, name, summary and tags |
+| `GET /agents?search=&model=&license=&page=1&page_size=24` | `{items:[...],total,page,page_size,pages}`; model/license filters match exact values; text search includes slug, name, summary and tags |
 | `POST /agents` | Authenticated initial release, owns its slug; returns release detail |
 | `GET /agents/{slug}` | Owner, latest manifest, versions with digests/timestamps, and downloads |
 | `POST /agents/{slug}/versions` | Owner-only new immutable version, returns release detail |
@@ -93,6 +94,10 @@ All routes begin with `/v1`:
 | `POST /agents/{slug}/versions/{version}/comments` | Authenticated `{body}`; returns the created comment |
 | `GET /agents/{slug}/versions/{version}/reports` | `{items:[...]}` |
 | `POST /agents/{slug}/versions/{version}/reports` | Authenticated `{model,benchmark_id,passed,total,evidence_url?}`; returns created report |
+
+Catalog pages default to 24 results and accept a page size of 1–24; pages start at 1. Filtering precedes pagination, results are ordered by slug, and source files are excluded. The website stores filters and page in the URL. Offset pagination bounds responses but does not establish million-user search capacity; indexed metadata/search and bounded histories remain launch work.
+
+Publishing initial releases and new versions also requires `X-Agent-Hub-Rules: 2026-10-23`; absent or stale acknowledgement returns 428. Read `/v1/policies` for the active version. Successful publication stores an account/version/timestamp acknowledgement atomically with the release. Review the website’s `/rules` page and the operator responsibilities below.
 
 Release detail is `{slug,owner,manifest,files,digest,created_at}`. Listing rows include `{slug,name,summary,owner,latest_version,digest,license,recommended_models,tags,downloads}`. The latest version is the most recently published release; publishing never overwrites an existing version. Slug/version collisions return 409, another user's version publication returns 403, and missing records return 404. These writes are atomic transactions.
 

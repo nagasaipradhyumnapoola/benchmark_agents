@@ -48,17 +48,75 @@ def account(client, username="alice"):
 
 
 def bearer(token):
-    return {"Authorization": f"Bearer {token}"}
+    return {"Authorization": f"Bearer {token}", "X-Agent-Hub-Rules": "2026-10-23"}
+
+
+def test_publication_rules_are_required_and_receipt_is_saved(client, tmp_path):
+    token = account(client)
+    for headers in [
+        {"Authorization": f"Bearer {token}"},
+        {**bearer(token), "X-Agent-Hub-Rules": "old"},
+    ]:
+        assert client.post("/v1/agents", headers=headers, json=release()).status_code == 428
+    assert client.post("/v1/agents", headers=bearer(token), json=release()).status_code == 201
+    with sqlite3.connect(tmp_path / "hub.sqlite3") as db:
+        receipt = db.execute(
+            "SELECT username, rules_version FROM publication_acceptances"
+        ).fetchone()
+    assert receipt == ("alice", "2026-10-23")
 
 
 def test_empty_separate_service_and_security_headers(client):
     assert client.get("/v1/health").json() == {"status": "ok"}
-    assert client.get("/v1/agents").json() == {"items": [], "total": 0}
+    assert client.get("/v1/agents").json() == {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "page_size": 24,
+        "pages": 1,
+    }
     assert client.get("/api/models").status_code == 404
     assert client.get("/v1/health", headers={"Host": "evil.example"}).status_code == 400
     assert client.get("/v1/health", headers={"Origin": "https://evil.example"}).status_code == 403
     assert client.get("/v1/health", headers={"Origin": "null"}).status_code == 403
     assert client.get("/v1/health").headers["X-Content-Type-Options"] == "nosniff"
+
+
+def test_catalog_pages_are_bounded_stable_and_filter_before_paging(client):
+    token = account(client)
+    for number in range(29):
+        item = release()
+        item["manifest"].update(
+            slug=f"paged-agent-{number:02d}",
+            name="Straße agent",
+            license="MIT" if number % 2 else "Apache-2.0",
+        )
+        assert client.post("/v1/agents", headers=bearer(token), json=item).status_code == 201
+    first = client.get("/v1/agents").json()
+    second = client.get("/v1/agents?page=2").json()
+    assert (first["total"], first["page_size"], first["pages"]) == (29, 24, 2)
+    assert len(first["items"]) == 24
+    assert len(second["items"]) == 5
+    assert second["page"] == 2
+    assert first["items"][-1]["slug"] == "paged-agent-23"
+    assert second["items"][0]["slug"] == "paged-agent-24"
+    assert "files" not in first["items"][0]
+    filtered = client.get(
+        "/v1/agents",
+        params={
+            "search": "STRASSE",
+            "license": "MIT",
+            "model": "test-model",
+            "page_size": 5,
+            "page": 2,
+        },
+    ).json()
+    assert (filtered["total"], filtered["pages"], len(filtered["items"])) == (14, 3, 5)
+    assert filtered["items"][0]["slug"] == "paged-agent-11"
+    assert client.get("/v1/agents?search=%27%20OR%201%3D1").json()["total"] == 0
+    assert client.get("/v1/agents?page=3").json()["items"] == []
+    for query in ("page=0", "page_size=25", "page_size=0", "page_size=1000000"):
+        assert client.get(f"/v1/agents?{query}").status_code == 422
 
 
 def test_auth_password_and_tokens_hashed_expiry_logout(client, tmp_path):

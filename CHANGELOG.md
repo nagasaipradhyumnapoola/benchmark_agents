@@ -2,6 +2,13 @@
 
 ## Unreleased — 0.1.0 development
 
+- Exact user-supplied logo, matching black-and-white catalog styling and a width-aware Agent Hub terminal banner.
+- Canonical `agent-hub` command; existing command aliases, storage and environment names stay compatible.
+- Versioned publication rules, required publisher acknowledgement and atomic account/release receipts.
+- Bounded 24-entry catalog pages with URL-persisted search/model/license filters and first/previous/next navigation.
+- Fixed valid-release import limits and escaped untrusted terminal control sequences.
+- Full launch-readiness review with reproducible disposable probes and explicit public-scale blockers.
+
 - Separate Agent Hub with accounts, immutable Python/Node.js source releases, search, version history, comments and explicitly self-reported benchmark summaries.
 - Digest-pinned one-click source imports and a complete publish → import → model pairing → benchmark → result-sharing workflow.
 - Independent multi-model × multi-agent selection in the website and terminal, bounded to 16 sequential pairs.
@@ -9,7 +16,7 @@
 - Community suggestion drafts, reviewed GitHub links and downloadable catalog contributions.
 - Agent directory layout, grouped publishing form, release section navigation and discover/share sidebar organization.
 - Isolated browser test runner that starts and stops its own empty Lab and Hub services.
-- Product renamed to Bench Agents; canonical `bench-agents` CLI and `BENCH_AGENTS_*` settings, with legacy aliases retained.
+- Product renamed to Agent Hub; canonical `agent-hub` CLI, compatible `bench-agents`/`benchlab` aliases and existing `BENCH_AGENTS_*` settings.
 - Guided terminal with original bold banner, model/agent setup, live progress, verified result tables, comparison and ZIP export.
 - Empty startup inventory; explicit demonstrations and isolated verification workspaces.
 - Website onboarding, endpoint and agent forms, native/controlled mode separation, one-task setup and clearer result interpretation.

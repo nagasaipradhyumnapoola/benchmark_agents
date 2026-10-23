@@ -66,7 +66,7 @@ def create_app(data_dir: Path | None = None, *, run_worker: bool = True) -> Fast
                 await job
             engine.recover()
 
-    application = FastAPI(title="Bench Agents API", version=__version__, lifespan=lifespan)
+    application = FastAPI(title="Agent Hub API", version=__version__, lifespan=lifespan)
     application.state.store = store
     application.state.engine = engine
 

@@ -12,6 +12,7 @@ import httpx
 
 import benchlab
 from benchlab.hub import create_hub_app
+from benchlab.policies import PUBLICATION_RULES_VERSION
 from benchlab.sdk import Laboratory
 
 
@@ -21,6 +22,8 @@ async def main():
     data = root / "data"
     hub = create_hub_app(root / "registry")
     assert any(route.path == "/v1/health" for route in hub.routes)
+    assert any(route.path == "/v1/policies" for route in hub.routes)
+    assert PUBLICATION_RULES_VERSION == "2026-10-23"
     assert not any(route.path == "/api/models" for route in hub.routes)
     os.environ["BENCH_AGENTS_DATA_DIR"] = str(data)
     lab = Laboratory(data)
@@ -33,11 +36,7 @@ async def main():
         (root / filename).write_bytes(content)
         assert content
     command = [
-        str(
-            Path(sys.executable).with_name(
-                "bench-agents.exe" if os.name == "nt" else "bench-agents"
-            )
-        ),
+        str(Path(sys.executable).with_name("agent-hub.exe" if os.name == "nt" else "agent-hub")),
         "experiments",
         "list",
     ]
@@ -92,6 +91,7 @@ async def main():
                 "api_shared_storage": "passed",
                 "community_catalog_packaged": "passed",
                 "separate_hub_modules_packaged": "passed",
+                "agent_hub_cli_and_policy_module": "passed",
                 "exports": ["json", "csv", "html", "zip"],
             },
             indent=2,

@@ -25,6 +25,7 @@ WORKDIR /web
 RUN groupadd --gid 10001 benchlab && useradd --uid 10001 --gid benchlab --create-home benchlab
 COPY --from=web-build --chown=benchlab:benchlab /web/.next/standalone ./
 COPY --from=web-build --chown=benchlab:benchlab /web/.next/static ./.next/static
+COPY --from=web-build --chown=benchlab:benchlab /web/public ./public
 COPY LICENSE NOTICE.md /licenses/
 COPY third_party/ /licenses/third_party/
 USER 10001:10001

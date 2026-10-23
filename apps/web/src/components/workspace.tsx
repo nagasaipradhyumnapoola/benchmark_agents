@@ -17,6 +17,7 @@ import {
   Menu,
   Play,
   Settings2,
+  ShieldCheck,
   SlidersHorizontal,
   TerminalSquare,
   Users,
@@ -36,6 +37,7 @@ const navigation: [string, [string, string, LucideIcon][]][] = [
     [
       ["/hub", "Agent Hub", Boxes],
       ["/community", "Community", Users],
+      ["/rules", "Rules & safety", ShieldCheck],
     ],
   ],
   [
@@ -71,8 +73,15 @@ function Navigation({ close }: { close?: () => void }) {
   return (
     <>
       <Link href="/" className="brand" onClick={close}>
+        <img
+          src="/agent-hub-logo.png"
+          alt=""
+          className="brand-image"
+          width={386}
+          height={502}
+        />
         <span className="brand-name">
-          Bench <span>Agents</span>
+          Agent <span>Hub</span>
         </span>
       </Link>
       <nav aria-label="Main navigation">
@@ -153,7 +162,7 @@ export function Workspace({ children }: { children: React.ReactNode }) {
         <main id="main-content">{children}</main>
         <footer className="workspace-footer">
           <span>
-            Bench Agents <span className="footer-divider">/</span> Local
+            Agent Hub <span className="footer-divider">/</span> Local
             benchmarking workspace
           </span>
           <Link href="/docs">

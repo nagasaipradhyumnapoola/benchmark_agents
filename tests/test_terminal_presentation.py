@@ -14,7 +14,7 @@ def test_startup_banner_and_menu_are_readable_without_color(tmp_path):
     render_banner(console, lab)
     render_menu(console, lab)
     text = stream.getvalue()
-    assert "Bench Agents" in text
+    assert "Agent Hub" in text
     assert "Connect a model" in text and "Connect an agent" in text
     assert "0 models" in text and "0 agents" in text
     assert "\x1b[" not in text
@@ -26,7 +26,7 @@ def test_narrow_terminal_uses_compact_heading(tmp_path):
 
     stream = StringIO()
     render_banner(Console(file=stream, width=42, color_system=None), Laboratory(tmp_path))
-    assert "Bench Agents" in stream.getvalue()
+    assert "Agent Hub" in stream.getvalue()
     assert all(len(line) <= 42 for line in stream.getvalue().splitlines())
 
 

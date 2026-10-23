@@ -150,7 +150,7 @@ def list_benchmarks() -> list[dict]:
     ] + [
         {
             "id": "starter-v1",
-            "name": "Bench Agents public starter",
+            "name": "Agent Hub public starter",
             "version": "1.0.0",
             "description": "Original public fixtures; tool/state tasks verify plans and structured responses, not live environment interaction.",
             "license": "Apache-2.0",

@@ -6,11 +6,11 @@ This is the integration audit for the actual implementation, superseding interme
 
 | Check | Actual result | Evidence / reproduction |
 | --- | --- | --- |
-| Python suite including optional Inspect | 231 passed, 4 skipped; three upstream deprecation warnings | `uv run pytest --cov=benchlab --cov-report=json:docs/evidence/coverage.json`; 86% statement coverage |
-| Static Python checks | Ruff and mypy pass | `uv run ruff check src tests examples scripts`; `uv run mypy src/benchlab` (29 source files) |
-| Frontend components/forms/navigation | 33 passed | `npm test --prefix apps/web` |
+| Python suite including optional Inspect | 236 passed, 4 skipped; three upstream deprecation warnings | `uv run pytest --cov=benchlab --cov-report=json:docs/evidence/coverage.json`; 86% statement coverage |
+| Static Python checks | Ruff and mypy pass | `uv run ruff check src tests examples scripts`; `uv run mypy src/benchlab` (30 source files) |
+| Frontend components/forms/navigation | 35 passed | `npm test --prefix apps/web` |
 | Frontend type/format/build | pass | `npm run typecheck --prefix apps/web`; `npm run format:check --prefix apps/web`; `npm run build --prefix apps/web` |
-| Browser integration | 21 passed, 0 failures/skips/flakes | [browser-results.json](evidence/browser-results.json); real API on 8000 and production web on 3000 |
+| Browser integration | 22 passed, 0 failures/skips/flakes | [browser-results.json](evidence/browser-results.json); real API on 8000 and production web on 3000 |
 | Full host-safe deterministic suite | Reference 9/9, deliberately flawed 0/9 | [full-offline.json](evidence/full-offline.json); `uv run python scripts/full_offline.py` |
 | Two independent provider HTTP endpoints | pass | `tests/test_http_integration.py`: actual loopback HTTP requests, model/seed/usage, independent verification, persisted comparison |
 | Controlled agent pair | pass | Same test file: two real Python subprocess harnesses call the selected loopback endpoint through explicit model/URL bindings |
@@ -19,7 +19,7 @@ This is the integration audit for the actual implementation, superseding interme
 | Python packaging | sdist and wheel build | `uv build` |
 | Isolated wheel installation | pass | New venv; import from site-packages; SDK demo; installed CLI; API on 8001; four exports; [fresh-install.json](evidence/fresh-install.json) |
 | Clean web installation | pass | Disposable `.bench-agents/fresh-web`, copied source/lockfiles, `npm ci --ignore-scripts`, production build, standalone startup on 3001, `/api/health` proxy response |
-| One-command startup | pass | [cli-ui.json](evidence/cli-ui.json); actual `bench-agents ui` launches API and built dashboard through Node, no cmd shell; browser E2E runs against this startup |
+| One-command startup | pass | [cli-ui.json](evidence/cli-ui.json); actual `agent-hub ui` launches API and built dashboard through Node, no cmd shell; browser E2E runs against this startup |
 | Dependency audits | no known vulnerabilities reported in tested runtime set | [python-audit.json](evidence/python-audit.json), [web-audit.json](evidence/web-audit.json), [browser-dependency-audit.json](evidence/browser-dependency-audit.json) |
 | Docker configuration | Compose validates | `docker compose config --quiet`; no Docker socket mount |
 | Docker runtime / container image build | **BLOCKED** | Desktop Inference-manager socket startup error; four explicit opt-in runtime tests skipped, not passed |
@@ -76,26 +76,26 @@ API Host/Origin checks and loopback defaults, environment-name credentials, best
 
 ## Pass 4 — UI/UX
 
-The final refinement applies Impeccable to the established graphite system: Discover & share navigation, a directory with filter rail and source metadata, grouped publication fields, release section links and mobile stacking. Desktop and 390px directory captures were inspected. Browser tests now cover fourteen routes at four widths and axe scans on overview, builder, Community, Hub directory, populated release and replay. The mechanical detector returned no findings. These checks do not establish every accessibility criterion. In-app documentation includes publication/import/model setup and result-sharing instructions.
+The final refinement applies Impeccable to the established graphite system: Discover & share navigation, a directory with filter rail and source metadata, grouped publication fields, release section links and mobile stacking. Desktop and 390px directory captures were inspected. Browser tests now cover fifteen routes at four widths and axe scans on overview, builder, Community, Hub directory, populated release and replay. The mechanical detector returned no findings. These checks do not establish every accessibility criterion. In-app documentation includes publication/import/model setup and result-sharing instructions.
 
 Inspected actual desktop overview/comparison/replay and 390px loaded overview screenshots. An initial mobile screenshot captured loading skeletons; screenshot capture now waits for persisted experiment content. Internal scrolling preserves legible technical tables. Fixed keyboard focus for JSON/text evidence, preserved dark contrast and native text, and added real category comparisons. E2E covers first-run instructions, demo, model/agent forms, benchmark/builder, execution/cancel/failure, compare, replay tabs/filters, ablation, exports, persisted refresh, settings import, mobile sheet and error/empty states. Axe reports no violations in the three tested major workflows; it does not prove every accessibility criterion.
 
-The refined website uses a quieter typographic Bench Agents identity, ruled sections, actual inventory counts, clear setup ordering, optional agent pairing and a single-task first test. Technical JSON sits behind details disclosures. Saving a registration is distinguished from confirming compatibility; run completion is distinguished from passed-task count. Native agent links select native mode and hide shared endpoint pairing. Interaction references were the official [Inspect log viewer](https://inspect.aisi.org.uk/log-viewer.html) for sample drill-down and [Promptfoo getting started](https://www.promptfoo.dev/docs/getting-started/) for provider-to-evaluation flow. The original terminal banner uses bold block lettering with a muted gold accent, informed by the hierarchy in the official [Hermes startup banner](https://github.com/NousResearch/hermes-agent/blob/main/hermes_cli/banner.py); its code and artwork were not copied.
+The refined website uses a quieter typographic Agent Hub identity, ruled sections, actual inventory counts, clear setup ordering, optional agent pairing and a single-task first test. Technical JSON sits behind details disclosures. Saving a registration is distinguished from confirming compatibility; run completion is distinguished from passed-task count. Native agent links select native mode and hide shared endpoint pairing. Interaction references were the official [Inspect log viewer](https://inspect.aisi.org.uk/log-viewer.html) for sample drill-down and [Promptfoo getting started](https://www.promptfoo.dev/docs/getting-started/) for provider-to-evaluation flow. The original terminal banner uses bold block lettering with a muted gold accent, informed by the hierarchy in the official [Hermes startup banner](https://github.com/NousResearch/hermes-agent/blob/main/hermes_cli/banner.py); its code and artwork were not copied.
 
 ## Pass 5 — install/release
 
 Built wheel/sdist and installed the wheel into a new venv without source imports. Exercised SDK positive/negative demo, installed CLI shared state, four exports and a real temporary API process, then stopped that process. Copied web source and lockfiles to a disposable directory, resolved clean dependencies, built every route, started standalone server on 3001, verified the web/API proxy and stopped the temporary web server. The main local workspace remains available on 3000/8000. Windows build failure from a running standalone preview locking `.next/standalone` was resolved by stopping the owned preview before rebuilding.
 
-The Windows one-command launcher now resolves Node and the installed Next entry point directly, avoiding cmd launcher failures. At default API port 8000 it uses an existing production build; otherwise it starts dev mode. The custom-port dev API/proxy/demo passed, but the first cold page compile exceeded a 45-second request on this low-memory host. The built dashboard responds immediately and is used by the full browser suite. README installation now builds before `bench-agents ui`. Build/dev/start scripts disable Next.js telemetry. Final focused API and CLI regressions also passed after list ordering and launcher fixes.
+The Windows one-command launcher now resolves Node and the installed Next entry point directly, avoiding cmd launcher failures. At default API port 8000 it uses an existing production build; otherwise it starts dev mode. The custom-port dev API/proxy/demo passed, but the first cold page compile exceeded a 45-second request on this low-memory host. The built dashboard responds immediately and is used by the full browser suite. README installation now builds before `agent-hub ui`. Build/dev/start scripts disable Next.js telemetry. Final focused API and CLI regressions also passed after list ordering and launcher fixes.
 
 ## Remaining gates and exact setup
 
 1. **Real-model smoke: BLOCKED — endpoint unavailable.** No 7B/14B weights were loaded. Supply an already authorized, affordable/local service. OpenAI-compatible base URL format: `http[s]://HOST:PORT/v1` (no embedded credentials/query); endpoints must implement `GET /models` with the exact ID in `data[].id` and `POST /chat/completions`. Set `ModelConfig.model` to that exact provider-advertised ID. The supplied config uses `api_key_env: BENCH_AGENTS_PROVIDER_KEY`; set that variable only in the backend shell if authentication is required, or remove api_key_env for a credential-free local service. Edit `examples/openai-compatible-model.json`, then run:
 
    ```powershell
-   uv run bench-agents models add examples/openai-compatible-model.json
-   uv run bench-agents models probe configured-endpoint
-   uv run bench-agents run --model configured-endpoint --benchmark starter-v1 --trials 1 --name "Authorized real-model smoke"
+   uv run agent-hub models add examples/openai-compatible-model.json
+   uv run agent-hub models probe configured-endpoint
+   uv run agent-hub run --model configured-endpoint --benchmark starter-v1 --trials 1 --name "Authorized real-model smoke"
    ```
 
    Ollama format: base URL `http://127.0.0.1:11434`, exact pre-existing model name from `/api/tags`, optional api_key_env only if that endpoint actually requires it. Do not start or download a model without checking memory and authorization. The current template ID is deliberately a placeholder, not a claimed working model.
@@ -105,3 +105,10 @@ The Windows one-command launcher now resolves Node and the installed Next entry 
 3. **Credentialed native products: UNVERIFIED.** Generic subprocess wire execution is verified. Codex/OpenCode discovery/argv/parsers are tested, but each product needs an explicit authorized provider and isolated profile. Preserve native vs controlled labeling and the dual host-process opt-in. No existing user login files are copied implicitly.
 
 Large upstream suite runs, multimodal/desktop environments, full native tool instrumentation, hardware/energy metering, and PostgreSQL/object storage are outside the advertised tested built-ins. They are visible limitations, not simulated capabilities. Do not label this checkout V1.0 release-ready until the applicable remaining acceptance gates are exercised.
+
+
+## Public-platform follow-up
+
+The whole-product security, terminal, UX and operations review is recorded in [the launch-readiness audit](launch-readiness-audit-2026-10-23.md), with baseline and current disposable probes. It identifies 21 findings/gap groups and explicitly withholds million-user public-launch approval. Import name/argument boundaries and terminal control injection were fixed; publication acknowledgement is enforced atomically. The catalog now returns at most 24 agents with URL-persisted filters and page navigation; histories, indexed search, moderation, account lifecycle, distributed storage and execution isolation remain open. The exact supplied logo is verified byte-for-byte for both the website and icon.
+
+Final follow-up verification: 236 backend tests passed (four Docker skips), 35 frontend tests passed, 22 browser tests passed, Ruff/mypy/typecheck/format/production build passed, and the rebuilt wheel installed in a fresh environment with the `agent-hub` entry point and policy module. The first browser attempt stopped on a Windows screenshot-file write error; file access was checked and a full fresh rerun passed without code changes. This was not a product assertion failure or evidence of load capacity. The restored default preview has zero models, agents, experiments, runs, Hub agents/accounts and Community drafts.

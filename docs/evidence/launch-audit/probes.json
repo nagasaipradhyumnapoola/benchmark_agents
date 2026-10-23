@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-23T13:14:38.167785+00:00",
+  "audited_revision": "f5e9b9890c521bde1dd1d81a6829d74b5f10e948",
+  "meaning": "Observations confirm launch gaps, not passing production acceptance tests",
+  "live_workspace_untouched": true,
+  "temporary_probe_directories_removed": true,
+  "real_credentials_used": false,
+  "uploaded_code_executed": false,
+  "observations": {
+    "unauthenticated_private_api": {
+      "create": 201,
+      "list": 200,
+      "delete": 204,
+      "finding_confirmed": true,
+      "scope": "Local API has no identity/tenant boundary; public exposure is a deployment blocker"
+    },
+    "chunked_lab_body_limit": {
+      "bytes": 2098270,
+      "content_length_present": false,
+      "status": 200,
+      "finding_confirmed": true
+    },
+    "caller_selected_target_and_environment_reference": {
+      "status": 200,
+      "requests": [
+        {
+          "loopback_target": true,
+          "dummy_credential_forwarded": true
+        }
+      ],
+      "finding_confirmed": true,
+      "network": "MockTransport only; no network connection or real credential"
+    },
+    "authentication_throttle_scope": {
+      "single_peer_first_ten": [
+        401,
+        401,
+        401,
+        401,
+        401,
+        401,
+        401,
+        401,
+        401,
+        401
+      ],
+      "single_peer_eleventh": 429,
+      "fresh_worker_same_database": 401,
+      "finding_confirmed": true,
+      "scope": "Per-process peer limiter; shared egress collapses users and worker replicas do not share counters"
+    },
+    "hub_streaming_body_limit_positive_control": {
+      "status": 413,
+      "protection_confirmed": true
+    },
+    "published_release_import_name_contract": {
+      "published_name_length": 120,
+      "import_display_name_length": 126,
+      "rejected_fields": [
+        [
+          "name"
+        ]
+      ],
+      "finding_confirmed": true
+    },
+    "published_release_import_argument_contract": {
+      "published_args": 40,
+      "import_args_including_entrypoint": 41,
+      "rejected_fields": [
+        [
+          "args"
+        ]
+      ],
+      "finding_confirmed": true
+    },
+    "terminal_control_sequence": {
+      "publisher_name_accepted": true,
+      "osc52_reaches_simulated_tty": true,
+      "finding_confirmed": true,
+      "safety": "Captured in StringIO; never emitted to an actual terminal or clipboard"
+    },
+    "catalog_exceeds_own_proxy_limit": {
+      "synthetic_agents": 802,
+      "response_bytes": 4027189,
+      "list_seconds_single_local_sample": 0.0364,
+      "proxy_status": 502,
+      "finding_confirmed": true,
+      "fixture_note": "800 valid-shaped synthetic releases inserted transactionally; no public traffic or million-user load test"
+    },
+    "terminal_entry_exit": {
+      "exit_code": 0,
+      "help_exit_code": 0,
+      "menu_matrix_present": true
+    },
+    "provider_limit_after_buffering": {
+      "chunks_received_before_rejection": 20,
+      "fixture_total_chunks": 20,
+      "bytes_received": 1310720,
+      "finding_confirmed": true,
+      "network": "MockTransport only"
+    }
+  }
+}

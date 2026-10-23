@@ -9,11 +9,11 @@ export function Documentation() {
         description="Connect a model, run a small test, and understand the evidence."
       />
       <div className="split">
-        <Panel title="A practical guide to Bench Agents">
+        <Panel title="A practical guide to Agent Hub">
           <article className="prose">
             <h2 id="first-run">Your first experiment</h2>
             <p>
-              Bench Agents stores your model settings, experiments, results and
+              Agent Hub stores your model settings, experiments, results and
               traces in one local SQLite workspace. The browser, terminal and
               Python SDK share the same records. A new workspace starts empty.
             </p>
@@ -67,7 +67,7 @@ export function Documentation() {
               results or compare runs.
             </p>
             <pre>
-              <code>uv run bench-agents terminal</code>
+              <code>uv run agent-hub terminal</code>
             </pre>
             <p>
               The terminal and website use the same local workspace by default.

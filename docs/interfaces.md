@@ -1,25 +1,25 @@
 # CLI, REST and Python SDK
 
-All interfaces use the same engine and persisted schema. Run `uv run bench-agents --help` and each subcommand's `--help` for exact options. Normal CLI records are JSON; diagnostics/errors are on stderr with nonzero status where appropriate.
+All interfaces use the same engine and persisted schema. Run `uv run agent-hub --help` and each subcommand's `--help` for exact options. The earlier `bench-agents` and `benchlab` command aliases remain compatible. Use `agent-hub --no-color terminal` or `NO_COLOR=1` to disable terminal color. Normal CLI records are JSON; diagnostics/errors are on stderr with nonzero status where appropriate.
 
 | Command | Behavior |
 | --- | --- |
-| `bench-agents terminal` | Guided model and agent setup, real progress, results, comparison and ZIP export; see [Testing](testing.md) |
-| `bench-agents demo` | Execute two explicit deterministic systems through real verification; negative fixtures retained |
-| `bench-agents doctor` | Detect local runtime/storage/optional dependencies; installed does not imply exercised |
-| `bench-agents models list/add/probe` | Inspect, register from a config file and probe endpoints |
-| `bench-agents agents list/add/probe` | Inspect/register executables and probe discovery |
-| `bench-agents benchmarks list` | List runnable benchmark packs and requirements |
-| `bench-agents run --config experiment.json` | Validate, execute and independently verify; task failures exit 1 |
-| `bench-agents run --model MODEL_ID --trials 3` | Evaluate registered endpoint with starter tasks |
-| `bench-agents experiments list/show ID` | Retrieve persisted records and runs |
-| `bench-agents compare RUN_A RUN_B` | Condition-aware comparison and uncertainty |
-| `bench-agents report ID --format zip --out evidence.zip` | Export evidence; formats json/csv/html/zip |
-| `bench-agents cancel ID` | Persist cancellation observed by the active worker |
-| `bench-agents worker` | Process durable queue without browser; single daemon per workspace |
-| `bench-agents ui` | Launch private API, web and a separate local Hub unless an external registry is configured |
-| `bench-agents hub` | Launch the separate source registry on loopback 8100 |
-| `bench-agents ui --api-only` | Start REST API only, including from an installed wheel |
+| `agent-hub terminal` | Guided model and agent setup, real progress, results, comparison and ZIP export; see [Testing](testing.md) |
+| `agent-hub demo` | Execute two explicit deterministic systems through real verification; negative fixtures retained |
+| `agent-hub doctor` | Detect local runtime/storage/optional dependencies; installed does not imply exercised |
+| `agent-hub models list/add/probe` | Inspect, register from a config file and probe endpoints |
+| `agent-hub agents list/add/probe` | Inspect/register executables and probe discovery |
+| `agent-hub benchmarks list` | List runnable benchmark packs and requirements |
+| `agent-hub run --config experiment.json` | Validate, execute and independently verify; task failures exit 1 |
+| `agent-hub run --model MODEL_ID --trials 3` | Evaluate registered endpoint with starter tasks |
+| `agent-hub experiments list/show ID` | Retrieve persisted records and runs |
+| `agent-hub compare RUN_A RUN_B` | Condition-aware comparison and uncertainty |
+| `agent-hub report ID --format zip --out evidence.zip` | Export evidence; formats json/csv/html/zip |
+| `agent-hub cancel ID` | Persist cancellation observed by the active worker |
+| `agent-hub worker` | Process durable queue without browser; single daemon per workspace |
+| `agent-hub ui` | Launch private API, web and a separate local Hub unless an external registry is configured |
+| `agent-hub hub` | Launch the separate source registry on loopback 8100 |
+| `agent-hub ui --api-only` | Start REST API only, including from an installed wheel |
 
 REST OpenAPI lives at `http://127.0.0.1:8000/docs` and `/openapi.json`. Main resources are `/api/models`, `/api/agents`, `/api/benchmarks`, `/api/experiments`, `/api/runs`, `/api/compare`, `/api/diagnostics`, `/api/settings` and `/api/metrics`. POST `/api/demo` queues a zero-credential experiment; POST `/api/experiments/validate` checks compatibility without launching. See the [shared contracts](contracts.md) for exact payloads and return shapes. IDs are opaque; list responses are arrays. Poll events by monotonic `after` sequence. Export endpoints are ordinary attachments.
 

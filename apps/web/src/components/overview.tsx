@@ -81,8 +81,8 @@ function FirstExperiment({ data }: { data: OverviewData }) {
           Browse configurations, launch runs and inspect results in the same
           local workspace.
         </p>
-        <pre tabIndex={0} aria-label="Launch the Bench Agents terminal">
-          <code>uv run bench-agents terminal</code>
+        <pre tabIndex={0} aria-label="Launch the Agent Hub terminal">
+          <code>uv run agent-hub terminal</code>
         </pre>
         <Link href="/docs#terminal" className="subtle-link">
           Terminal setup <ArrowUpRight size={14} />

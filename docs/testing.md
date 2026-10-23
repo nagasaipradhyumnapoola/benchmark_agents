@@ -1,4 +1,4 @@
-# Test Bench Agents
+# Test Agent Hub
 
 Start with one task and one model. Add an agent only after the model connection works. A fresh workspace contains no saved systems or results; the public benchmark definitions are available immediately.
 
@@ -8,7 +8,7 @@ From the repository directory:
 
 ```shell
 uv sync --locked --python 3.12
-uv run bench-agents terminal
+uv run agent-hub terminal
 ```
 
 1. Choose **1 — Connect a model**. Give it a display name, choose OpenAI-compatible or Ollama, select local or hosted, and enter the endpoint URL and exact provider model ID. Authentication choices are no key, environment-variable reference, or hidden session-key entry. A session key stays only in this terminal process; an environment key must already be available in its shell. Do not paste a key into a name or URL.
@@ -25,7 +25,7 @@ Agents execute code with your OS privileges. For a trusted harness, explicitly e
 
 ```powershell
 $env:BENCH_AGENTS_ALLOW_HOST_PROCESS = "1"
-uv run bench-agents terminal
+uv run agent-hub terminal
 ```
 
 On Bash, use `export BENCH_AGENTS_ALLOW_HOST_PROCESS=1`. Each experiment also asks for explicit authorization. A fresh task directory and restricted environment do not provide a filesystem or network sandbox.
@@ -44,7 +44,7 @@ For the included [one-request HTTP harness](../examples/adapters/minimal_chat_ag
 | API key environment variable | `HARNESS_API_KEY` |
 | Additional environment allowlist | Blank unless your own harness explicitly needs it |
 
-Choose **4 — Test model + agent**, select the saved endpoint and harness, and run the single-task check. Bench Agents passes the selected model ID and URL through these bindings and passes the credential through the configured target variable when needed. The example is an integration harness, not an autonomous coding agent.
+Choose **4 — Test model + agent**, select the saved endpoint and harness, and run the single-task check. Agent Hub passes the selected model ID and URL through these bindings and passes the credential through the configured target variable when needed. The example is an integration harness, not an autonomous coding agent.
 
 For an installed Codex or OpenCode product, use its adapter and **5 — Test native agent**. Configure its authorized provider and isolated profile explicitly. Native products use their own settings; they cannot be presented as controlled endpoint comparisons. Credentialed native execution remains unverified in this environment.
 
@@ -55,10 +55,10 @@ Install Node.js 24, then build and launch:
 ```shell
 npm ci --prefix apps/web
 npm run build --prefix apps/web
-uv run bench-agents ui
+uv run agent-hub ui
 ```
 
-Open [Bench Agents](http://127.0.0.1:3000). The overview explains the setup order and shows the actual inventory.
+Open [Agent Hub](http://127.0.0.1:3000). The overview explains the setup order and shows the actual inventory.
 
 1. **Register model** → choose **Local server** or **Hosted API** → enter endpoint and model ID → choose authentication → save → **Probe compatibility**. A hosted OpenAI-compatible service can use a hidden session API key; a local service can choose no key. Environment references remain available. Saving alone does not prove connectivity.
 2. Choose **Build an experiment with this model**. Name it, select **Use one quick text task**, and keep one trial. The advanced section contains isolation, retries and technical configuration.
@@ -133,14 +133,16 @@ uv run python scripts/test_browser.py
 
 The runner creates new Lab and Hub directories under `.bench-agents/browser-checks/<timestamp>`, starts them on 8000/8101 and the built website on 3000, then stops its owned services on success or failure. Its environment excludes provider keys. Do not point browser tests at data you intend to keep.
 
-The 21 browser tests cover empty onboarding, forms, real HTTP/subprocess execution, a 2×2 matrix across local and API-key fixture connections, Community review/exports, account registration, source publication, pinned import, benchmarking the imported agent and sharing the versioned result. They also cover cancellation, persistence, comparison, replay, ablation, downloads, keyboard access, accessibility scans and fourteen routes at four widths. Fixture HTTP services start and stop automatically. Start `uv run bench-agents ui` afterward to return to your normal workspace.
+The 22 browser tests cover empty onboarding, forms, real HTTP/subprocess execution, a 2×2 matrix across local and API-key fixture connections, Community review/exports, account registration, source publication, pinned import, benchmarking the imported agent and sharing the versioned result. They also cover cancellation, persistence, comparison, replay, ablation, downloads, keyboard access, accessibility scans and fifteen routes at four widths. Fixture HTTP services start and stop automatically. Start `uv run agent-hub ui` afterward to return to your normal workspace.
 
 ## Agent Hub: complete developer walkthrough
 
-`bench-agents ui` starts a separate empty local Hub on 8100 unless `BENCH_AGENTS_HUB_URL` selects another registry. Start the registry independently with `uv run bench-agents hub`.
+`agent-hub ui` starts a separate empty local Hub on 8100 unless `BENCH_AGENTS_HUB_URL` selects another registry. Start the registry independently with `uv run agent-hub hub`.
+
+Browse using search, an exact model ID and license. Filters and page are shareable URL state; refresh preserves them. The registry returns at most 24 entries per page, and Next/Previous retain filters. Clear filters or First page recovers from an empty result.
 
 1. Open **Agent Hub → Create account**. Browsing and import need no account; publication, comments and shared results require one.
-2. **Publish an agent**: enter details, a unique slug, semantic version and license. Describe inputs, outputs and model requirements in the README. Paste Python/Node.js source or upload text files and set the entrypoint. The harness reads a prompt from stdin and returns final text on stdout.
+2. **Publish an agent**: enter details, a unique slug, semantic version and license. Describe inputs, outputs and model requirements in the README. Paste Python/Node.js source or upload text files and set the entrypoint. Read Rules & safety and check the publication acknowledgement before submitting. The harness reads a prompt from stdin and returns final text on stdout.
 3. Add recommended exact model IDs. Under **Model bindings, arguments and dependencies**, supply the model flag and environment variable names your harness expects; credential values belong in private model registrations. Declare dependencies for users to review separately.
 4. Inspect the published source and digest. **Import agent** registers it without execution or dependency installation. Edited imported source/configuration cannot run under that release identity; publish a new version or register a separate custom harness for changes.
 5. Connect an authorized endpoint in **Model explorer**. Review dependencies and trust the code before enabling the backend host-process setting. Choose **Benchmark imported agent**, select a model and one quick task, authorize the experiment, validate and launch.

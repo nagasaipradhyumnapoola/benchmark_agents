@@ -20,6 +20,7 @@ mlflow = ["mlflow>=3.8,<4"]
 dev = ["pytest>=8.3,<10", "pytest-asyncio>=1,<2", "pytest-cov>=6,<8", "ruff>=0.12,<1", "mypy>=1.15,<2", "build>=1.2,<2", "pip-audit>=2.9,<3", "types-jsonschema>=4.23"]
 
 [project.scripts]
+agent-hub = "benchlab.cli:app"
 bench-agents = "benchlab.cli:app"
 benchlab = "benchlab.cli:app"
 

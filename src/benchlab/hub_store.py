@@ -94,6 +94,15 @@ class HubStore:
                     created_at TEXT NOT NULL,
                     FOREIGN KEY (slug, version) REFERENCES versions(slug, version)
                 );
+                CREATE TABLE IF NOT EXISTS publication_acceptances (
+                    slug TEXT NOT NULL,
+                    version TEXT NOT NULL,
+                    username TEXT NOT NULL REFERENCES users(username),
+                    rules_version TEXT NOT NULL,
+                    accepted_at TEXT NOT NULL,
+                    PRIMARY KEY (slug, version),
+                    FOREIGN KEY (slug, version) REFERENCES versions(slug, version)
+                );
             """)
 
     @contextmanager
@@ -186,7 +195,12 @@ class HubStore:
         }
 
     def publish(
-        self, release: AgentRelease, username: str, *, existing_slug: str | None = None
+        self,
+        release: AgentRelease,
+        username: str,
+        *,
+        existing_slug: str | None = None,
+        rules_version: str | None = None,
     ) -> dict[str, Any]:
         slug, version = release.manifest.slug, release.manifest.version
         if existing_slug is not None and existing_slug != slug:
@@ -212,33 +226,54 @@ class HubStore:
                     (slug, version, release.model_dump_json(), digest, created),
                 )
                 db.execute("UPDATE agents SET latest_version = ? WHERE slug = ?", (version, slug))
+                if rules_version:
+                    db.execute(
+                        "INSERT INTO publication_acceptances VALUES (?, ?, ?, ?, ?)",
+                        (slug, version, username, rules_version, created),
+                    )
                 row = self._get_version(db, slug, version)
         except sqlite3.IntegrityError as exc:
             raise HubError(409, "Agent version already exists and is immutable") from exc
         return self._release_detail(row)
 
     def list_agents(
-        self, search: str = "", model: str = "", license_name: str = ""
+        self,
+        search: str = "",
+        model: str = "",
+        license_name: str = "",
+        *,
+        page: int = 1,
+        page_size: int = 24,
     ) -> dict[str, Any]:
+        if page < 1 or not 1 <= page_size <= 24:
+            raise HubError(422, "Use page >= 1 and page_size between 1 and 24")
+        # Filter and page in SQLite; never load every release's source into Python.
+        source = """
+            FROM agents a JOIN versions v
+            ON v.slug = a.slug AND v.version = a.latest_version
+            WHERE (? = '' OR instr(casefold(
+                a.slug || ' ' || json_extract(v.release_json, '$.manifest.name') || ' ' ||
+                json_extract(v.release_json, '$.manifest.summary') || ' ' ||
+                json_extract(v.release_json, '$.manifest.tags')
+            ), ?) > 0)
+            AND (? = '' OR EXISTS (
+                SELECT 1 FROM json_each(v.release_json, '$.manifest.recommended_models')
+                WHERE value = ?
+            ))
+            AND (? = '' OR json_extract(v.release_json, '$.manifest.license') = ?)
+        """
+        values = (search, search.casefold(), model, model, license_name, license_name)
         with self.connection() as db:
+            db.create_function("casefold", 1, str.casefold, deterministic=True)
+            total = db.execute("SELECT count(*) " + source, values).fetchone()[0]
             rows = db.execute(
-                "SELECT a.*, v.release_json, v.digest FROM agents a JOIN versions v ON v.slug = a.slug AND v.version = a.latest_version ORDER BY a.slug"
+                "SELECT a.*, json_extract(v.release_json, '$.manifest') AS manifest_json, "
+                "v.digest " + source + " ORDER BY a.slug LIMIT ? OFFSET ?",
+                (*values, page_size, min((page - 1) * page_size, total)),
             ).fetchall()
         items = []
         for row in rows:
-            manifest = json.loads(row["release_json"])["manifest"]
-            if (
-                search
-                and search.casefold()
-                not in " ".join(
-                    [row["slug"], manifest["name"], manifest["summary"], *manifest["tags"]]
-                ).casefold()
-            ):
-                continue
-            if model and model not in manifest["recommended_models"]:
-                continue
-            if license_name and manifest["license"] != license_name:
-                continue
+            manifest = json.loads(row["manifest_json"])
             items.append(
                 {
                     "slug": row["slug"],
@@ -253,7 +288,13 @@ class HubStore:
                     "downloads": row["downloads"],
                 }
             )
-        return {"items": items, "total": len(items)}
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "pages": max(1, (total + page_size - 1) // page_size),
+        }
 
     def agent(self, slug: str) -> dict[str, Any]:
         with self.connection() as db:

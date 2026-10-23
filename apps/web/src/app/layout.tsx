@@ -5,7 +5,7 @@ import { Providers } from "@/components/providers";
 import { Workspace } from "@/components/workspace";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "Bench Agents — Local benchmarking workspace",
+  title: "Agent Hub — Discover, test and share agents",
   description:
     "Benchmark models and agents in a local workspace with independently verified execution evidence.",
 };

@@ -95,7 +95,11 @@ const lines = (value: string) =>
 const asError = (error: unknown) =>
   error instanceof Error ? error : new Error("Request failed. Try again.");
 
-async function request<T>(path: string, body?: unknown): Promise<T> {
+async function request<T>(
+  path: string,
+  body?: unknown,
+  publication = false,
+): Promise<T> {
   const response = await fetch(`/api/hub${path}`, {
     credentials: "same-origin",
     cache: "no-store",
@@ -103,7 +107,10 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
       ? {}
       : {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(publication ? { "X-Agent-Hub-Rules": "2026-10-23" } : {}),
+          },
           body: JSON.stringify(body),
         }),
   });
@@ -315,6 +322,7 @@ function Publisher({
   const [busy, setBusy] = useState(false);
   const [uploads, setUploads] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
+  const [acceptedRules, setAcceptedRules] = useState(false);
   const manifest = initial?.manifest;
   const firstPath = Object.keys(initial?.files ?? {})[0] ?? "";
   async function upload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -348,6 +356,14 @@ function Publisher({
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    if (!acceptedRules) {
+      setError(
+        new Error(
+          "Review and acknowledge the publication rules before publishing.",
+        ),
+      );
+      return;
+    }
     const fields = new FormData(event.currentTarget);
     const text = (name: string) => String(fields.get(name) ?? "").trim();
     try {
@@ -410,6 +426,7 @@ function Publisher({
         await request<Release>(
           initial ? `/agents/${route(initial.slug)}/versions` : "/agents",
           release,
+          true,
         ),
       );
     } catch (failure) {
@@ -664,9 +681,30 @@ function Publisher({
             </label>
           </div>
         </details>
+        <div className="publish-rules-summary">
+          <p>
+            Publish only source you have permission to distribute. Keep
+            credentials and private data out of every file and description.
+          </p>
+          <Link href="/rules" className="subtle-link">
+            Read the publication rules <ArrowUpRight size={14} />
+          </Link>
+          <label className="policy-ack">
+            <input
+              type="checkbox"
+              required
+              checked={acceptedRules}
+              onChange={(event) => setAcceptedRules(event.target.checked)}
+            />
+            <span>
+              I have reviewed the publication rules and have permission to share
+              this source.
+            </span>
+          </label>
+        </div>
         <ErrorState error={error} />
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={busy || uploading}>
+          <Button type="submit" disabled={busy || uploading || !acceptedRules}>
             <Upload size={15} />
             {busy ? "Publishing…" : "Publish release"}
           </Button>
@@ -1216,12 +1254,35 @@ export function AgentHub() {
   const version = params.get("version") || run.data?.version || "";
   const [publishing, setPublishing] = useState(false);
   const [initial, setInitial] = useState<Release | undefined>();
-  const [filters, setFilters] = useState("");
-  const catalog = useHub<{ items: Agent[]; total: number }>(
+  const filterParams = new URLSearchParams();
+  for (const key of ["search", "model", "license"]) {
+    const value = params.get(key)?.trim();
+    if (value) filterParams.set(key, value);
+  }
+  const filters = filterParams.toString();
+  const requestedPage = Number(params.get("page") || "1");
+  const page =
+    Number.isSafeInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
+  const catalogQuery = new URLSearchParams(filters);
+  if (page > 1) catalogQuery.set("page", String(page));
+  const catalog = useHub<{
+    items: Agent[];
+    total: number;
+    page: number;
+    page_size: number;
+    pages: number;
+  }>(
     status.data?.available && !slug
-      ? `/agents${filters ? `?${filters}` : ""}`
+      ? `/agents${catalogQuery.size ? `?${catalogQuery}` : ""}`
       : null,
   );
+  function pageHref(value: number) {
+    const query = new URLSearchParams(filters);
+    if (value > 1) query.set("page", String(value));
+    return `/hub${query.size ? `?${query}` : ""}`;
+  }
   function publish(release: Release) {
     setPublishing(false);
     setInitial(undefined);
@@ -1232,7 +1293,7 @@ export function AgentHub() {
     <div className="stack agent-hub">
       <PageTitle
         title="Agent Hub"
-        description="Find an agent. Make it yours. See how it performs."
+        description="Browse source, choose a model, and test an agent in your own workspace."
         action={
           <Button
             disabled={!status.data?.available || !user}
@@ -1281,7 +1342,7 @@ export function AgentHub() {
             role="region"
             aria-label="Hub start command"
           >
-            uv run bench-agents hub
+            uv run agent-hub hub
           </pre>
           <Button variant="outline" onClick={status.reload}>
             Reconnect to hub
@@ -1314,6 +1375,7 @@ export function AgentHub() {
           ) : (
             <div className="hub-directory">
               <form
+                key={filters}
                 className="hub-filters stack"
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -1323,7 +1385,7 @@ export function AgentHub() {
                     const value = String(form.get(key) ?? "").trim();
                     if (value) query.set(key, value);
                   }
-                  setFilters(query.toString());
+                  router.push(`/hub${query.size ? `?${query}` : ""}`);
                 }}
               >
                 <h2>Find your agent</h2>
@@ -1334,15 +1396,27 @@ export function AgentHub() {
                       name="search"
                       type="search"
                       placeholder="Name, description or tag"
+                      defaultValue={params.get("search") ?? ""}
+                      maxLength={200}
                     />
                   </label>
                   <label className="field">
                     <span>Filter by model</span>
-                    <input name="model" placeholder="provider/exact-model" />
+                    <input
+                      name="model"
+                      placeholder="provider/exact-model"
+                      defaultValue={params.get("model") ?? ""}
+                      maxLength={200}
+                    />
                   </label>
                   <label className="field">
                     <span>Filter by license</span>
-                    <input name="license" placeholder="MIT, Apache-2.0…" />
+                    <input
+                      name="license"
+                      placeholder="MIT, Apache-2.0…"
+                      defaultValue={params.get("license") ?? ""}
+                      maxLength={100}
+                    />
                   </label>
                 </div>
                 <div>
@@ -1353,8 +1427,8 @@ export function AgentHub() {
                   {filters && (
                     <Button
                       variant="ghost"
-                      type="reset"
-                      onClick={() => setFilters("")}
+                      type="button"
+                      onClick={() => router.push("/hub")}
                     >
                       Clear filters
                     </Button>
@@ -1375,7 +1449,7 @@ export function AgentHub() {
               <section className="hub-results" aria-label="Agent directory">
                 <div className="hub-results-heading">
                   <h2>Browse agents</h2>
-                  <span className="muted">
+                  <span className="muted" role="status" aria-live="polite">
                     {catalog.data
                       ? `${catalog.data.total} ${catalog.data.total === 1 ? "agent" : "agents"}`
                       : "Loading registry…"}
@@ -1415,13 +1489,16 @@ export function AgentHub() {
                             <span>{agent.license}</span>
                             <span>v{agent.latest_version}</span>
                             <span>
-                              <Download size={13} /> {agent.downloads} downloads
+                              <Download size={13} /> {agent.downloads}{" "}
+                              {agent.downloads === 1 ? "download" : "downloads"}
                             </span>
                           </div>
                           <p className="muted text-xs mt-3 break-all">
                             Suggested models:{" "}
-                            {agent.recommended_models.join(", ") ||
+                            {agent.recommended_models.slice(0, 3).join(", ") ||
                               "None suggested"}
+                            {agent.recommended_models.length > 3 &&
+                              ` · +${agent.recommended_models.length - 3} more on release`}
                           </p>
                           {agent.tags.length > 0 && (
                             <p className="muted text-xs mt-2 break-words">
@@ -1438,17 +1515,19 @@ export function AgentHub() {
                       <Boxes size={34} strokeWidth={1.2} aria-hidden="true" />
                       <Empty
                         title={
-                          filters
+                          filters || page > 1
                             ? "No agents match these filters"
                             : "No agents published yet"
                         }
                         description={
-                          filters
-                            ? "Try another model, license or search term."
-                            : "The registry starts empty. Publish your source to make a versioned agent available here."
+                          page > 1
+                            ? "This page is empty. Return to the first page to browse available agents."
+                            : filters
+                              ? "Try another model, license or search term."
+                              : "The registry starts empty. Publish your source to make a versioned agent available here."
                         }
                       />
-                      {!filters && (
+                      {!filters && page === 1 && (
                         <>
                           <p>
                             Publish a Python or Node.js agent with its code,
@@ -1475,6 +1554,35 @@ export function AgentHub() {
                       )}
                     </div>
                   )
+                )}
+                {catalog.data && (catalog.data.pages > 1 || page > 1) && (
+                  <nav
+                    className="hub-pagination"
+                    aria-label="Agent results pages"
+                  >
+                    <div className="flex flex-wrap gap-2">
+                      {page > 1 && (
+                        <Button variant="outline" asChild>
+                          <Link href={pageHref(1)}>First page</Link>
+                        </Button>
+                      )}
+                      {page > 1 && page <= catalog.data.pages && (
+                        <Button variant="outline" asChild>
+                          <Link href={pageHref(page - 1)}>Previous</Link>
+                        </Button>
+                      )}
+                      {page < catalog.data.pages && (
+                        <Button variant="outline" asChild>
+                          <Link href={pageHref(page + 1)}>Next page</Link>
+                        </Button>
+                      )}
+                    </div>
+                    <p className="muted">
+                      {page <= catalog.data.pages
+                        ? `Page ${page} of ${catalog.data.pages} · ${catalog.data.total} agents`
+                        : "Page unavailable"}
+                    </p>
+                  </nav>
                 )}
               </section>
             </div>

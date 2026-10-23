@@ -4,6 +4,7 @@ import { spawn, ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 
 let experiment: string;
 let runIds: string[] = [];
@@ -56,6 +57,22 @@ test.describe('Real backend research workflow', () => {
     await expect(page.getByRole('heading', { name: 'Your first experiment' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Optional offline demonstration' })).toBeVisible();
     await page.screenshot({ path: 'docs/evidence/onboarding-desktop.png', fullPage: true });
+  });
+
+  test('Agent Hub uses the exact supplied logo and exposes publication and safety rules', async ({ page, request }) => {
+    const originalHash = '9601aad360601e8fa7a09d299008a8340d914b366cb86b6c7fc158cb00cc7edc';
+    for (const path of ['/agent-hub-logo.png', '/icon.png']) {
+      const asset = await request.get(`http://127.0.0.1:3000${path}`);
+      expect(asset.status()).toBe(200);
+      expect(createHash('sha256').update(await asset.body()).digest('hex')).toBe(originalHash);
+    }
+    await page.goto('/rules');
+    await expect(page).toHaveTitle('Agent Hub — Discover, test and share agents');
+    await expect(page.getByRole('heading', { name: 'Rules & safety', exact: true })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Rules sections' })).toBeVisible();
+    await page.screenshot({ path: 'docs/evidence/rules-desktop.png', fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: 'docs/evidence/rules-mobile.png', fullPage: true });
   });
 
   test('offline demonstration queues real execution and retains rejected results', async ({ page, request }) => {
@@ -277,6 +294,7 @@ test.describe('Real backend research workflow', () => {
     await page.getByLabel('Model flag (optional)', { exact: true }).fill('--model');
     await page.getByLabel('Model base URL environment variable (optional)', { exact: true }).fill('HARNESS_BASE_URL');
     await page.getByLabel('Model API key environment variable (optional)', { exact: true }).fill('HARNESS_API_KEY');
+    await page.getByRole('checkbox', { name: /^I have reviewed the publication rules/ }).check();
     await page.getByRole('button', { name: 'Publish release', exact: true }).click();
     await expect(page).toHaveURL(/agent=browser-published-harness/);
     await expect(page.getByRole('button', { name: 'Import agent', exact: true })).toBeVisible();
@@ -320,12 +338,21 @@ test.describe('Real backend research workflow', () => {
     await page.screenshot({ path: 'docs/evidence/agent-hub-directory-desktop.png', fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: 'docs/evidence/agent-hub-directory-mobile.png', fullPage: true });
+    await page.getByLabel('Search agents', { exact: true }).fill('no-such-agent-filter');
+    await page.getByRole('button', { name: 'Search registry', exact: true }).click();
+    await expect(page).toHaveURL(/search=no-such-agent-filter/);
+    await expect(page.getByText('No agents match these filters', { exact: true })).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel('Search agents', { exact: true })).toHaveValue('no-such-agent-filter');
+    await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
+    await expect(page).toHaveURL(/\/hub$/);
+    await expect(page.getByRole('link', { name: 'Browser published harness', exact: false })).toBeVisible();
   });
 
   test('benchmark library filters public tasks and exposes requirements', async ({ page }) => {
     await page.goto('/benchmarks');
     await expect(page.getByRole('heading', { name: 'Benchmark library', exact: true })).toBeVisible();
-    await expect(page.getByText('Bench Agents public starter', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Agent Hub public starter', { exact: true }).first()).toBeVisible();
     await expect(page.getByText(/Docker/).first()).toBeVisible();
     await page.screenshot({ path: 'docs/evidence/benchmarks-desktop.png', fullPage: true });
   });
@@ -423,9 +450,9 @@ test.describe('Real backend research workflow', () => {
     await expect(page.getByText('Resource not found', { exact: true })).toBeVisible();
   });
 
-  test('all fourteen routes render at 1440/1024/768/390 without viewport overflow', async ({ page }) => {
+  test('all fifteen routes render at 1440/1024/768/390 without viewport overflow', async ({ page }) => {
     test.setTimeout(180000);
-    const routes = ['/', '/models', '/agents', '/benchmarks', '/community', '/hub', '/experiments/new', '/experiments', '/compare', '/replay', '/optimize', '/reports', '/settings', '/docs'];
+    const routes = ['/', '/models', '/agents', '/benchmarks', '/community', '/hub', '/rules', '/experiments/new', '/experiments', '/compare', '/replay', '/optimize', '/reports', '/settings', '/docs'];
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     for (const width of [1440, 1024, 768, 390]) {
@@ -453,7 +480,7 @@ test.describe('Real backend research workflow', () => {
 
   test('keyboard access and axe WCAG scan on the overview, builder and replay', async ({ page }) => {
     test.setTimeout(90000);
-    for (const path of ['/', '/experiments/new', '/community', '/hub', '/hub?agent=browser-published-harness&version=1.0.0', `/replay?run=${runIds[0]}`]) {
+    for (const path of ['/', '/experiments/new', '/community', '/hub', '/rules', '/hub?agent=browser-published-harness&version=1.0.0', `/replay?run=${runIds[0]}`]) {
       await page.goto(path);
       await expect(page.locator('main h1')).toBeVisible();
       await page.getByRole('link', { name: 'Skip to content' }).focus();

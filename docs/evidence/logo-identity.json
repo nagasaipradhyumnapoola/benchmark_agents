@@ -1,0 +1,9 @@
+{
+  "source": "User-supplied original image",
+  "sha256": "9601aad360601e8fa7a09d299008a8340d914b366cb86b6c7fc158cb00cc7edc",
+  "web_logo": "apps/web/public/agent-hub-logo.png",
+  "app_icon": "apps/web/src/app/icon.png",
+  "altered": false,
+  "regenerated": false,
+  "cropped": false
+}

@@ -1,14 +1,14 @@
-# Bench Agents
+# Agent Hub
 
 Publish and discover open-source agents, import versioned source into your workspace, and benchmark agents against local models or hosted APIs.
 
-Bench Agents combines a shared Agent Hub with a private browser dashboard, guided terminal, REST API and Python SDK. The Hub stores published source and community contributions; your Lab stores model connections, credentials and execution evidence. You can run both locally or connect your Lab to a self-hosted shared registry.
+Agent Hub combines a shared Agent Hub with a private browser dashboard, guided terminal, REST API and Python SDK. The Hub stores published source and community contributions; your Lab stores model connections, credentials and execution evidence. You can run both locally or connect your Lab to a self-hosted shared registry.
 
 **Status: 0.1.0 development.** The offline workflow and local HTTP integration tests pass. Real-model generation, Docker execution, and credentialed native-agent runs still have verification gates. See [verification status](#verification-status).
 
 [Get started](#get-started) · [Testing walkthrough](docs/testing.md) · [Model endpoints](#configure-a-model-endpoint) · [Agent harnesses](#evaluate-an-agent-harness) · [Development](#develop-and-test)
 
-![Bench Agents empty workspace and first-experiment guide](docs/evidence/empty-workspace-desktop.png)
+![Agent Hub empty workspace and first-experiment guide](docs/evidence/empty-workspace-desktop.png)
 
 Fresh workspaces contain no models, agents or results. Register your own systems when ready. The [comparison](docs/evidence/comparison-desktop.png) and [replay](docs/evidence/replay-desktop.png) screenshots use explicitly requested test fixtures; they demonstrate the pipeline and do not measure model intelligence.
 
@@ -25,10 +25,10 @@ git clone https://github.com/nagasaipradhyumnapoola/benchmark_agents.git
 cd benchmark_agents
 git switch main
 uv sync --locked --python 3.12
-uv run bench-agents terminal
+uv run agent-hub terminal
 ```
 
-The terminal opens with a bold Bench Agents banner and a guided menu. Connect an existing model endpoint, optionally connect an agent harness, then test one task or the eight default text tasks. Inspect failures, compare saved runs and export a ZIP evidence report from the menu. Node.js is needed only for the website. No inference server or model weights are started automatically.
+The terminal opens with a bold Agent Hub banner and a guided menu. Connect an existing model endpoint, optionally connect an agent harness, then test one task or the eight default text tasks. Inspect failures, compare saved runs and export a ZIP evidence report from the menu. Node.js is needed only for the website. No inference server or model weights are started automatically.
 
 For a small first test: **Connect a model → Test models → single reasoning task → review compatibility → confirm run → Inspect/export results**. Choose a local server or hosted API, enter the exact provider model ID, and select no key, a session-only API key, or an environment-variable reference. Session keys stay in the running process and need re-entry after restart. A saved configuration is not yet a verified connection. See the [step-by-step testing guide](docs/testing.md) for both terminal and browser workflows.
 
@@ -39,7 +39,7 @@ Install and build the web application, then launch the dashboard, private API an
 ```shell
 npm ci --prefix apps/web
 npm run build --prefix apps/web
-uv run bench-agents ui
+uv run agent-hub ui
 ```
 
 Open the [dashboard](http://127.0.0.1:3000) or [interactive API documentation](http://127.0.0.1:8000/docs). Stop a running web server before rebuilding its output directory.
@@ -56,7 +56,7 @@ The launcher starts a separate registry at `http://127.0.0.1:8100` when no exter
 
 The current portable release format supports Python/Node.js stdin/stdout harnesses. Arbitrary framework repositories may need a wrapper and separate dependency setup; a one-click import is not a universal environment installer. Registries start empty with no seeded agents, accounts or scores. This repository provides self-hostable software, not an already deployed public service. Internet-wide registration still requires operator moderation, quotas and account recovery; see the [hosting guide](docs/hub-server.md).
 
-At API port 8000, `bench-agents ui` uses the production build when available. Without a build, or with a custom API port, it starts the development server. Cold development compilation can be slow on machines with little available RAM. The web scripts disable Next.js telemetry.
+At API port 8000, `agent-hub ui` uses the production build when available. Without a build, or with a custom API port, it starts the development server. Cold development compilation can be slow on machines with little available RAM. The web scripts disable Next.js telemetry.
 
 To manage the services separately, run the backend in one terminal:
 
@@ -80,11 +80,11 @@ Run the full deterministic offline audit in its separate test workspace:
 uv run python scripts/full_offline.py
 ```
 
-Expected: reference **9/9**, deliberate negative **0/9**, and the Docker-only coding task explicitly blocked. This checks execution and verification, not intelligence. It leaves the default live inventory empty. The optional `bench-agents demo` command and the demonstration button under website Documentation deliberately create labeled demo records in the selected workspace; neither runs on startup.
+Expected: reference **9/9**, deliberate negative **0/9**, and the Docker-only coding task explicitly blocked. This checks execution and verification, not intelligence. It leaves the default live inventory empty. The optional `agent-hub demo` command and the demonstration button under website Documentation deliberately create labeled demo records in the selected workspace; neither runs on startup.
 
 ## Explore the workspace
 
-The fourteen dashboard screens read persisted backend records. Refreshing the browser preserves experiment state.
+The fifteen dashboard screens read persisted backend records. Refreshing the browser preserves experiment state.
 
 | Screen | Route | Workflow |
 | --- | --- | --- |
@@ -93,6 +93,7 @@ The fourteen dashboard screens read persisted backend records. Refreshing the br
 | Agent explorer | `/agents` | Register harnesses and check executable availability |
 | Benchmark library | `/benchmarks` | Inspect tasks, categories, verifiers, and requirements |
 | Agent Hub | `/hub` | Publish immutable source, browse releases, import agents, discuss and share benchmark summaries |
+| Rules & safety | `/rules` | Publication requirements, safe execution, data boundaries and reporting |
 | Community | `/community` | Draft agent/model/benchmark suggestions, review source/license links, and submit on GitHub |
 | Experiment builder | `/experiments/new` | Configure systems and conditions, validate, and launch |
 | Live experiments | `/experiments` | Follow progress, inspect errors, and cancel execution |
@@ -105,7 +106,7 @@ The fourteen dashboard screens read persisted backend records. Refreshing the br
 
 ## Configure a model endpoint
 
-Bench Agents connects to an existing endpoint. It does not download weights or start inference servers. Choose a model that fits available memory and your endpoint's authorization and cost constraints.
+Agent Hub connects to an existing endpoint. It does not download weights or start inference servers. Choose a model that fits available memory and your endpoint's authorization and cost constraints.
 
 ### OpenAI-compatible chat endpoints
 
@@ -133,9 +134,9 @@ The website and guided terminal also accept a hidden **session API key**. The ba
 Register, probe, and evaluate the endpoint:
 
 ```shell
-uv run bench-agents models add examples/openai-compatible-model.json
-uv run bench-agents models probe configured-endpoint
-uv run bench-agents run --model configured-endpoint --trials 1
+uv run agent-hub models add examples/openai-compatible-model.json
+uv run agent-hub models probe configured-endpoint
+uv run agent-hub run --model configured-endpoint --trials 1
 ```
 
 A successful probe confirms discovery and the advertised ID. It does not prove generation, tool support, structured-output support, or the declared context size.
@@ -145,9 +146,9 @@ A successful probe confirms discovery and the advertised ID. It does not prove g
 Edit [examples/ollama-model.json](examples/ollama-model.json), replacing its placeholder with an already installed model name from the running server. The default base URL is `http://127.0.0.1:11434`; the adapter uses `/api/tags` and `/api/chat`.
 
 ```shell
-uv run bench-agents models add examples/ollama-model.json
-uv run bench-agents models probe local-ollama
-uv run bench-agents run --model local-ollama --trials 1
+uv run agent-hub models add examples/ollama-model.json
+uv run agent-hub models probe local-ollama
+uv run agent-hub run --model local-ollama --trials 1
 ```
 
 See the [integration guide](docs/integrations.md) for provider contracts, resource requirements, and optional upstream frameworks.
@@ -165,12 +166,12 @@ For an explicitly configured, authorized Codex installation, the supplied exampl
 
 ```powershell
 $env:BENCH_AGENTS_ALLOW_HOST_PROCESS = "1"
-uv run bench-agents agents add examples/codex-agent.json
-uv run bench-agents agents probe configured-codex
-uv run bench-agents run --config examples/native-experiment.json
+uv run agent-hub agents add examples/codex-agent.json
+uv run agent-hub agents probe configured-codex
+uv run agent-hub run --config examples/native-experiment.json
 ```
 
-Prepare the product's provider configuration explicitly. Bench Agents does not copy existing CLI login profiles into task workspaces. Credentialed Codex/OpenCode execution remains unverified in the recorded audit.
+Prepare the product's provider configuration explicitly. Agent Hub does not copy existing CLI login profiles into task workspaces. Credentialed Codex/OpenCode execution remains unverified in the recorded audit.
 
 A controlled generic harness must bind the selected model name and endpoint through `model_flag` and `model_base_url_env`. Credentialed binding also requires `model_api_key_env`. Unsupported bindings and ignored native parameters fail preflight. See [configuration](docs/configuration.md) and the [one-request HTTP harness example](examples/adapters/minimal_chat_agent.py).
 
@@ -180,7 +181,7 @@ A controlled generic harness must bind the selected model name and endpoint thro
 
 Register each existing endpoint and each trusted custom subprocess agent, then select **Multiple agents × multiple models** in the experiment builder. Select the models and agents independently. For example, two models and three agents produce six explicit pairs. The preview shows each pair and the task-check count before preflight and launch. Terminal action **8 — Test multiple models + agents** provides the same workflow.
 
-Each pair uses its selected model ID, endpoint and credential bindings. There is a maximum of 16 pairs per experiment. Pairs execute sequentially under the shared total budget; no model weights are loaded by Bench Agents. Native Codex/OpenCode products keep their own provider settings and stay in native mode. See [Testing](docs/testing.md#multiple-models-and-agents) for the complete walkthrough.
+Each pair uses its selected model ID, endpoint and credential bindings. There is a maximum of 16 pairs per experiment. Pairs execute sequentially under the shared total budget; no model weights are loaded by Agent Hub. Native Codex/OpenCode products keep their own provider settings and stay in native mode. See [Testing](docs/testing.md#multiple-models-and-agents) for the complete walkthrough.
 
 ### Share agents and recommendations
 
@@ -204,25 +205,25 @@ Public fixtures are not held out or contamination-resistant. Correlated tasks an
 
 ## Use the CLI and Python SDK
 
-The guided terminal uses readable tables and live progress. Scriptable commands emit JSON records and share the API's store. `bench-agents run` exits nonzero when tasks fail; `bench-agents demo` retains deliberate failures while checking pipeline execution. Python imports retain the `benchlab` namespace; the old `benchlab` command and `BENCHLAB_*` settings remain compatibility aliases. New configuration uses `bench-agents` and `BENCH_AGENTS_*`.
+The guided terminal uses readable tables and live progress. Scriptable commands emit JSON records and share the API's store. `agent-hub run` exits nonzero when tasks fail; `agent-hub demo` retains deliberate failures while checking pipeline execution. Python imports retain the `benchlab` namespace; the old `benchlab` command and `BENCHLAB_*` settings remain compatibility aliases. New configuration uses `bench-agents` and `BENCH_AGENTS_*`.
 
 | Command | Purpose |
 | --- | --- |
-| `bench-agents terminal` | Guided setup, model/agent runs, progress, results, ZIP export and comparison |
-| `bench-agents doctor` | Inspect runtime and storage diagnostics |
-| `bench-agents models list` / `bench-agents agents list` | List registered systems |
-| `bench-agents benchmarks list` | Inspect available packs |
-| `bench-agents run --config experiment.json` | Validate and execute a JSON/TOML experiment |
-| `bench-agents experiments list` | Find persisted experiment IDs |
-| `bench-agents experiments show experiment_id` | Retrieve an experiment and its run IDs |
-| `bench-agents compare run_a run_b` | Compare saved runs under checked conditions |
-| `bench-agents report experiment_id --format zip --out evidence.zip` | Export records and evidence |
-| `bench-agents cancel experiment_id` | Request persisted cancellation |
-| `bench-agents worker` | Process the durable queue without the dashboard |
-| `bench-agents ui --api-only` | Start the API without frontend source dependencies |
-| `bench-agents hub` | Start the separate source registry on loopback port 8100 |
+| `agent-hub terminal` | Guided setup, model/agent runs, progress, results, ZIP export and comparison |
+| `agent-hub doctor` | Inspect runtime and storage diagnostics |
+| `agent-hub models list` / `agent-hub agents list` | List registered systems |
+| `agent-hub benchmarks list` | Inspect available packs |
+| `agent-hub run --config experiment.json` | Validate and execute a JSON/TOML experiment |
+| `agent-hub experiments list` | Find persisted experiment IDs |
+| `agent-hub experiments show experiment_id` | Retrieve an experiment and its run IDs |
+| `agent-hub compare run_a run_b` | Compare saved runs under checked conditions |
+| `agent-hub report experiment_id --format zip --out evidence.zip` | Export records and evidence |
+| `agent-hub cancel experiment_id` | Request persisted cancellation |
+| `agent-hub worker` | Process the durable queue without the dashboard |
+| `agent-hub ui --api-only` | Start the API without frontend source dependencies |
+| `agent-hub hub` | Start the separate source registry on loopback port 8100 |
 
-Prefix commands with `uv run` in a source checkout. Replace `experiment_id`, `run_a`, and `run_b` with saved IDs. Run `uv run bench-agents --help` or a subcommand's `--help` for its options.
+Prefix commands with `uv run` in a source checkout. Replace `experiment_id`, `run_a`, and `run_b` with saved IDs. Run `uv run agent-hub --help` or a subcommand's `--help` for its options.
 
 The SDK can run the credential-free demo, compare its systems, and export evidence:
 
@@ -284,12 +285,18 @@ Version-1 contracts cover systems, tasks, environments, observations, verifiers,
 Keep the service local unless you add an authenticated deployment boundary. Documented defaults bind to loopback and check API Host and Origin headers.
 
 - Native executables and trusted Python plugins retain application privileges. Use an isolated OS account or VM for untrusted agents.
-- Generated Python requires Docker verification with no host mounts, restricted networking, a non-root user, read-only root filesystem, and resource/output limits. Bench Agents does not fall back to host execution.
+- Generated Python requires Docker verification with no host mounts, restricted networking, a non-root user, read-only root filesystem, and resource/output limits. Agent Hub does not fall back to host execution.
 - Artifact collection checks path containment, rejects symlinks, and caps content sizes. Report generation escapes HTML and neutralizes spreadsheet formulas.
 - Credential redaction is best effort. Avoid sending private data or secrets to tasks, and review evidence before sharing it.
-- Bench Agents does not automatically pull images, download model weights, or upload results. Configured providers receive the prompts you choose to send.
+- Agent Hub does not automatically pull images, download model weights, or upload results. Configured providers receive the prompts you choose to send.
 
 Docker is not an absolute security boundary. The [security policy](SECURITY.md) documents the threat model. The [Compose configuration](compose.yaml) omits the host Docker socket; coding verification needs a separately managed runtime.
+
+## Public-launch readiness
+
+The product is named **Agent Hub**. `agent-hub` is the canonical CLI; `bench-agents` and `benchlab` remain compatibility aliases. Existing `BENCH_AGENTS_*` settings, `.bench-agents` storage and the `benchlab` Python namespace remain supported. The user-supplied website logo and app icon are retained unchanged.
+
+Read the [million-user launch audit](docs/launch-readiness-audit-2026-10-23.md) for confirmed issues, fixes and outstanding launch gates. The current development build is not certified for a million-user public service. Publication requires review of [Rules & Safety](http://127.0.0.1:3000/rules), including a versioned acknowledgement recorded by the registry.
 
 ## Verification status
 
@@ -297,16 +304,16 @@ The recorded local audit is dated **2026-10-23**. These are observed test result
 
 | Check | Recorded result |
 | --- | --- |
-| Backend suite with optional Inspect installed | 231 passed, 4 Docker runtime tests skipped |
+| Backend suite with optional Inspect installed | 236 passed, 4 Docker runtime tests skipped |
 | Backend statement coverage | 86% |
-| Frontend component/form tests | 33 passed |
-| Browser tests against the actual API | 21 passed |
+| Frontend component/form tests | 35 passed |
+| Browser tests against the actual API | 22 passed |
 | All host-safe offline fixtures | Reference 9/9; deliberate negative fixture 0/9 |
 | Local HTTP providers and controlled subprocess pair | Passed through the real request/execution pipeline |
 | Isolated wheel install and clean frontend install/build/start | Passed |
 | Tested dependency audits | No known vulnerabilities reported at audit time |
 
-Browser checks cover fourteen routes at 1440, 1024, 768, and 390 px. Accessibility scans cover the overview, builder, Community and replay workflows. Windows was tested locally; Linux/macOS execution and hosted CI results are not claimed by this audit.
+Browser checks cover fifteen routes at 1440, 1024, 768, and 390 px. Accessibility scans cover the overview, builder, Community, directory, release details, Rules & safety and replay workflows. Windows was tested locally; Linux/macOS execution and hosted CI results are not claimed by this audit.
 
 The following gates remain open:
 
@@ -370,4 +377,4 @@ Use these references for details beyond installation:
 
 ## License
 
-Original Bench Agents code and starter tasks use the [Apache-2.0 license](LICENSE). Dependencies, fonts, models, datasets, and external frameworks retain their own terms. Attribution and retained third-party notices are in [NOTICE.md](NOTICE.md) and [third_party/](third_party/).
+Original Agent Hub code and starter tasks use the [Apache-2.0 license](LICENSE). Dependencies, fonts, models, datasets, and external frameworks retain their own terms. Attribution and retained third-party notices are in [NOTICE.md](NOTICE.md) and [third_party/](third_party/).

@@ -45,7 +45,7 @@ it("guides an empty workspace through real setup without synthetic results or a 
   expect(
     screen.getByRole("link", { name: "Build experiment" }),
   ).toHaveAttribute("href", "/experiments/new");
-  expect(screen.getByText("uv run bench-agents terminal")).toBeVisible();
+  expect(screen.getByText("uv run agent-hub terminal")).toBeVisible();
   expect(screen.getByRole("link", { name: "Terminal setup" })).toHaveAttribute(
     "href",
     "/docs#terminal",

@@ -25,6 +25,7 @@ _FONT = {
     "G": [" ####", "#    ", "# ###", "#   #", " ####"],
     "T": ["#####", "  #  ", "  #  ", "  #  ", "  #  "],
     "S": [" ####", "#    ", " ### ", "    #", "#### "],
+    "U": ["#   #", "#   #", "#   #", "#   #", " ### "],
     " ": ["     "] * 5,
 }
 
@@ -44,20 +45,20 @@ def safe(value, style=""):
 
 
 def render_banner(console, lab):
-    if console.width >= 76:
+    if console.width >= 64:
         glyph = "█" if console.encoding.lower().replace("-", "") == "utf8" else "#"
         logo = "\n".join(
-            " ".join(_FONT[char][row] for char in "BENCH AGENTS").rstrip() for row in range(5)
+            " ".join(_FONT[char][row] for char in "AGENT HUB").rstrip() for row in range(5)
         )
         heading = Text(logo.replace("#", glyph), style="bold #d8c98d")
     else:
-        heading = Text("Bench Agents", style="bold #d8c98d")
+        heading = Text("Agent Hub", style="bold #d8c98d")
     console.print(
         Panel(
             Group(
                 heading,
                 Text(
-                    f"\nBench Agents  /  {__version__}  /  Local evaluation workbench", style="bold"
+                    f"\nAgent Hub  /  {__version__}  /  Local evaluation workbench", style="bold"
                 ),
             ),
             border_style="#66665e",
@@ -68,7 +69,7 @@ def render_banner(console, lab):
     arrow = "→" if console.encoding.lower().replace("-", "") == "utf8" else "->"
     console.print(
         Text(
-            f"Connect {arrow} test {arrow} inspect. Credentials stay in your environment.",
+            f"Connect {arrow} test {arrow} inspect. Keys stay private to your local process.",
             style="dim",
         )
     )

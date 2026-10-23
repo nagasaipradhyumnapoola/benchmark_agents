@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from pathlib import Path
 from typing import Annotated, NoReturn
 
@@ -16,7 +17,8 @@ from benchlab.settings import redact
 
 app = typer.Typer(
     no_args_is_help=True,
-    help="Bench Agents — local-first AI experiments with independent verification.",
+    pretty_exceptions_show_locals=False,
+    help="Agent Hub — local-first AI experiments with independent verification.",
 )
 models = typer.Typer(help="Register, inspect and probe model endpoints.")
 agents = typer.Typer(help="Register, inspect and probe agent executables.")
@@ -26,6 +28,12 @@ app.add_typer(models, name="models")
 app.add_typer(agents, name="agents")
 app.add_typer(benchmarks, name="benchmarks")
 app.add_typer(experiments, name="experiments")
+
+
+@app.callback()
+def display_options(no_color: Annotated[bool, typer.Option("--no-color", help="Disable terminal colors.")] = False) -> None:
+    if no_color:
+        os.environ["NO_COLOR"] = "1"
 
 
 def output(value) -> None:
