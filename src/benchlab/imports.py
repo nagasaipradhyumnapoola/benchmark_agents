@@ -109,7 +109,9 @@ def install_release(store, payload: dict, hub_url: str, expected_digest: str) ->
     )
     config = AgentConfig(
         id=identity,
-        name=f"{manifest.name} {manifest.version}",
+        # Keep display labels within the local limit; source identity is the full
+        # slug/version/digest, never a shortened presentation label.
+        name=f"{manifest.name[:119 - len(manifest.version)]} {manifest.version}",
         adapter="subprocess",
         executable=sys.executable
         if manifest.runtime == "python"

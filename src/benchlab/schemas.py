@@ -89,7 +89,8 @@ class AgentConfig(Contract):
     name: str = Field(min_length=1, max_length=120)
     adapter: str = Field(min_length=1, max_length=80)
     executable: str | None = None
-    args: list[str] = Field(default_factory=list, max_length=40)
+    # A portable release allows 40 arguments plus its staged entrypoint path.
+    args: list[str] = Field(default_factory=list, max_length=41)
     model_flag: str | None = None
     model_base_url_env: str | None = Field(default=None, pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")
     model_api_key_env: str | None = Field(default=None, pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")

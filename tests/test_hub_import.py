@@ -114,3 +114,22 @@ def test_engine_resolution_rejects_edited_imports(tmp_path, mutation):
         store.save_agent(AgentConfig.model_validate(config))
     with pytest.raises(ValueError, match="changed"):
         Engine(store)._resolve(system)
+
+
+@pytest.mark.parametrize("boundary", ["name", "args"])
+def test_every_published_name_and_argument_boundary_can_be_imported(tmp_path, boundary):
+    from benchlab.imports import install_release
+
+    item = release()
+    if boundary == "name":
+        item.manifest.name = "N" * 200
+    else:
+        item.manifest.args = ["fixture"] * 40
+    result = install_release(
+        Store(tmp_path), payload(item), "http://127.0.0.1:8100", release_digest(item)
+    )
+    config = result["agent"]["config"]
+    assert len(config["name"]) <= 120
+    assert config["name"].endswith(" 1.0.0")
+    assert config["args"][1:] == item.manifest.args
+    assert result["source"]["digest"] == release_digest(item)
